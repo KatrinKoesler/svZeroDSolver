@@ -112,5 +112,16 @@
             }
         }
     ],
-    "junctions": []
+    "junctions": [
+        {
+            "inlet_vessels": [
+                2
+            ],
+            "junction_name": "J0",
+            "junction_type": "NORMAL_JUNCTION",
+            "outlet_vessels": [
+                3
+            ]
+        }
+    ]
 }    
