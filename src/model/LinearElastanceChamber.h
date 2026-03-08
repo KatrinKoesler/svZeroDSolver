@@ -1,11 +1,13 @@
 // SPDX-FileCopyrightText: Copyright (c) Stanford University, The Regents of the
 // University of California, and others. SPDX-License-Identifier: BSD-3-Clause
+
 /**
- * @file ChamberElastanceInductor.h
- * @brief model::ChamberElastanceInductor source file
+ * @file LinearElastanceChamber.h
+ * @brief model::LinearElastanceChamber source file
  */
-#ifndef SVZERODSOLVER_MODEL_CHAMBERELASTANCEINDUCTOR_HPP_
-#define SVZERODSOLVER_MODEL_CHAMBERELASTANCEINDUCTOR_HPP_
+
+#ifndef SVZERODSOLVER_MODEL_LINEARELASTANCECHAMBER_HPP_
+#define SVZERODSOLVER_MODEL_LINEARELASTANCECHAMBER_HPP_
 
 #include <math.h>
 
@@ -18,26 +20,21 @@
 #include "debug.h"
 
 /**
- * @brief Cardiac chamber with elastance and inductor.
+ * @brief Cardiac chamber with linear elastance (no inductor).
  *
  * Models a cardiac chamber as a time-varying capacitor (elastance with
- * specified resting volumes) and an inductor. See \cite kerckhoffs2007coupling
- * (equations 1 and 2). The addition of the inductor is similar to the models in
- * \cite sankaran2012patient and \cite menon2023predictors.
+ * specified resting volumes) without inductance. See \cite Regazzoni2022
  *
  * This chamber block can be connected to other blocks using junctions.
  *
  * \f[
- * \begin{circuitikz} \draw
- * node[left] {$Q_{in}$} [-latex] (0,0) -- (0.8,0);
+ * \begin{circuitikz}
+ * \draw node[left] {$Q_{in}$} [-latex] (0,0) -- (0.8,0);
  * \draw (1,0) node[anchor=south]{$P_{in}$}
- * to (1,0)
- * node[anchor=south]{}
- * to [L, l=$L$, *-*] (3,0)
- * node[anchor=south]{$P_{out}$}
+ * to[short, *-*] (3,0) node[anchor=south]{$P_{out}$}
  * (1,0) to [vC, l=$E$, *-] (1,-1.5)
  * node[ground]{};
- * \draw [-latex] (3.2,0) -- (4.0,0) node[right] {$Q_{out}$} ;
+ * \draw (3.2,0) -- (4.0,0) node[right] {$Q_{out}$} [-latex];
  * \end{circuitikz}
  * \f]
  *
@@ -48,7 +45,7 @@
  * \f]
  *
  * \f[
- * P_{in}-P_{out}-L\dot{Q}_{out}=0
+ * P_{in}-P_{out}=0
  * \f]
  *
  * \f[
@@ -64,7 +61,7 @@
  * \f[
  * \mathbf{E}^{e}=\left[\begin{array}{ccccc}
  * 0 & 0 & 0 & 0 & 0\\
- * 0 & 0 & 0 & -L & 0\\
+ * 0 & 0 & 0 & 0 & 0\\
  * 0 & 0 & 0 & 0 & -1
  * \end{array}\right]
  * \f]
@@ -88,53 +85,31 @@
  * In the above equations,
  *
  * \f[
- * V_{rest}(t)= \{1-A(t)\}(V_{rd}-V_{rs})+V_{rs}
+ * E_i(t) = E_i^{\text{pass}} + E_i^{\text{act,max}} \,
+ * \phi\!\left(t, t_C^i, t_R^i, T_C^i, T_R^i\right),
  * \f]
  *
  * \f[
- * A(t)=-\frac{1}{2}cos(2 \pi T_{contract}/T_{twitch})
- * \f]
- *
- * \f[
- * E(t)=(E_{max}-E_{min})A(t) + E_{min}
- * \f]
- *
+ * \phi(t, t_C, t_R, T_C, T_R) =
+ * \begin{cases}
+ * \frac{1}{2}\left[1 - \cos\!\left(\frac{\pi}{T_C} \operatorname{mod}(t - t_C,
+ * T_{\mathrm{HB}})\right)\right], & \text{if } 0 \le \operatorname{mod}(t -
+ * t_C, T_{\mathrm{HB}}) < T_C, \\[1.2em] \frac{1}{2}\left[1 +
+ * \cos\!\left(\frac{\pi}{T_R} \operatorname{mod}(t - t_R,
+ * T_{\mathrm{HB}})\right)\right], & \text{if } 0 \le \operatorname{mod}(t -
+ * t_R, T_{\mathrm{HB}}) < T_R, \\[1.2em] 0, & \text{otherwise.} \end{cases} \f]
  *
  * ### Parameters
  *
  * Parameter sequence for constructing this block
  *
  * * `0` Emax: Maximum elastance
- * * `1` Emin: Minimum elastance
- * * `2` Vrd: Rest diastolic volume
- * * `3` Vrs: Rest systolic volume
- * * `4` t_active: Activation time
- * * `5` t_twitch: Twitch time
- * * `6` Impedance: Impedance of the outflow
- *
- * ### Usage in json configuration file
- *
- *     "chambers": [
- *         {
- *             "type": "ChamberElastanceInductor",
- *             "name": "ventricle",
- *             "values": {
- *                 "Emax": 1.057,
- *                 "Emin": 0.091,
- *                 "Vrd": 26.1,
- *                 "Vrs": 18.0,
- *                 "Impedance": 0.000351787
- *             },
- *             "activation_function": {
- *                 "type": "half_cosine",
- *                 "t_active": 0.2,
- *                 "t_twitch": 0.3
- *             }
- *         }
- *     ],
- *     "initial_condition": {
- *         "Vc:ventricle": 96.07
- *     }
+ * * `1` Epass: Passive elastance
+ * * `2` Vrest: Rest diastolic volume
+ * * `3` contract_start: Contract start time
+ * * `4` relax_start: Relax start time
+ * * `5` contract_duration: Contract duration
+ * * `6` relax_duration: Relaxation duration
  *
  * ### Internal variables
  *
@@ -143,28 +118,26 @@
  * * `Vc`: Chamber volume
  *
  */
-class ChamberElastanceInductor : public Block {
+class LinearElastanceChamber : public Block {
  public:
   /**
-   * @brief Construct a new ChamberElastanceInductor object
+   * @brief Construct a new LinearElastanceChamber object
    *
    * @param id Global ID of the block
    * @param model The model to which the block belongs
    */
-  ChamberElastanceInductor(int id, Model* model)
-      : Block(id, model, BlockType::chamber_elastance_inductor,
+  LinearElastanceChamber(int id, Model* model)
+      : Block(id, model, BlockType::linear_elastance_chamber,
               BlockClass::chamber,
               {{"Emax", InputParameter()},
-               {"Emin", InputParameter()},
-               {"Vrd", InputParameter()},
-               {"Vrs", InputParameter()},
-               {"Impedance", InputParameter()}}) {}
+               {"Epass", InputParameter()},
+               {"Vrest", InputParameter()}}) {}
 
   /**
    * @brief Local IDs of the parameters
    *
    */
-  enum ParamId { EMAX = 0, EMIN = 1, VRD = 2, VRS = 3, IMPEDANCE = 4 };
+  enum ParamId { EMAX = 0, EPASS = 1, VREST = 2 };
 
   /**
    * @brief Set up the degrees of freedom (DOF) of the block
@@ -206,7 +179,6 @@ class ChamberElastanceInductor : public Block {
 
  private:
   double Elas;                                           // Chamber Elastance
-  double Vrest;                                          // Rest Volume
   std::unique_ptr<ActivationFunction> activation_func_;  // Activation function
 
  public:
@@ -226,4 +198,4 @@ class ChamberElastanceInductor : public Block {
   void get_elastance_values(std::vector<double>& parameters);
 };
 
-#endif  // SVZERODSOLVER_MODEL_CHAMBERELASTANCEINDUCTOR_HPP_
+#endif  // SVZERODSOLVER_MODEL_LINEARELASTANCECHAMBER_HPP_

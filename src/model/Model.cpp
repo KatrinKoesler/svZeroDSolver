@@ -21,6 +21,7 @@ Model::Model() {
        block_factory<ClosedLoopHeartPulmonary>()},
       {"ClosedLoopRCR", block_factory<ClosedLoopRCRBC>()},
       {"CORONARY", block_factory<OpenLoopCoronaryBC>()},
+      {"CORONARY_VAR_RES", block_factory<OpenLoopCoronaryVarResBC>()},
       {"FLOW", block_factory<FlowReferenceBC>()},
       {"NORMAL_JUNCTION", block_factory<Junction>()},
       {"PRESSURE", block_factory<PressureReferenceBC>()},
@@ -28,7 +29,10 @@ Model::Model() {
       {"RESISTANCE", block_factory<ResistanceBC>()},
       {"resistive_junction", block_factory<ResistiveJunction>()},
       {"ValveTanh", block_factory<ValveTanh>()},
-      {"ChamberElastanceInductor", block_factory<ChamberElastanceInductor>()}};
+      {"ChamberElastanceInductor", block_factory<ChamberElastanceInductor>()},
+      {"BloodVesselCRL", block_factory<BloodVesselCRL>()},
+      {"PiecewiseValve", block_factory<PiecewiseValve>()},
+      {"LinearElastanceChamber", block_factory<LinearElastanceChamber>()}};
 }
 
 Model::~Model() {}
@@ -116,7 +120,7 @@ std::string Model::get_block_name(int block_id) const {
 int Model::add_node(const std::vector<Block*>& inlet_eles,
                     const std::vector<Block*>& outlet_eles,
                     const std::string_view& name) {
-  // DEBUG_MSG("Adding node " << name);
+  DEBUG_MSG("Adding node " << name);
   auto node = std::shared_ptr<Node>(
       new Node(node_count, inlet_eles, outlet_eles, this));
   nodes.push_back(node);
