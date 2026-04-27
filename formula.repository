@@ -189,7 +189,7 @@ to
   - S_2 |Q_{\text{in},2}| Q_{\text{in},2} \\
   \vdots
   \end{array}\right] \]
-\_form#44=523x101:\[  \mathbf{J}^{e} = \left[\begin{array}{lllllllll}
+\_form#44=523x103:\[  \mathbf{J}^{e} = \left[\begin{array}{lllllllll}
   0 & 0 & \dots & 0 & 0 & \dots & 0 & 0 &
   \dots \\
   - y_4 & 0 & \dots & - \dot y_4 & 0 & \dots & |y_4| y_4 & 0 & \dots \\
