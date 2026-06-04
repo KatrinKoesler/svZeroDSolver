@@ -106,7 +106,8 @@ document.addEventListener('DOMContentLoaded', () => {
 <h2>Overview</h2>
 <p>The script <span class="tt">script/jacobian.py</span> reads block definitions from YAML files and generates C++ code for implementing the mathematical models in the solver. It uses symbolic differentiation (via SymPy) to automatically derive the necessary Jacobian matrices and system contributions.</p>
 <h2>Usage</h2>
-<div class="fragment"><div class="line">python jacobian.py &lt;yaml_file&gt;</div>
+<p>The script depends on SymPy, which is part of the project's <span class="tt">dev</span> dependency group. After running <span class="tt">uv sync</span> (see the <a class="el" href="developer_guide.html" title="Developer Guide">Developer Guide</a>), run it inside the managed environment:</p>
+<div class="fragment"><div class="line">uv run python scripts/jacobian.py &lt;yaml_file&gt;</div>
 </div><!-- fragment --><h2>YAML File Format</h2>
 <p>The YAML files define the mathematical model of a block with the following structure:</p>
 <h3>Required Sections</h3>

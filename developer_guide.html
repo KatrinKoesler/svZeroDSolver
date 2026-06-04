@@ -111,7 +111,7 @@ document.addEventListener('DOMContentLoaded', () => {
     <a href="#autotoc_md1">Build in debug mode </a>
   </li>
   <li class="level1">
-    <a href="#autotoc_md2">Install with pip </a>
+    <a href="#autotoc_md2">Install with uv </a>
   </li>
   <li class="level1">
     <a href="#autotoc_md3">Contributing to svZeroDSolver </a>
@@ -153,9 +153,15 @@ Build in debug mode</h1>
 <div class="line">cmake -DCMAKE_BUILD_TYPE=Debug ..</div>
 <div class="line">cmake --build .</div>
 </div><!-- fragment --><h1 class="doxsection"><a class="anchor" id="autotoc_md2"></a>
-Install with pip</h1>
-<p>Execute this command in the root folder to install the current source: </p><div class="fragment"><div class="line">pip install -e &quot;.[dev]&quot;</div>
-</div><!-- fragment --><p> This is useful when continuously running the integration tests during development.</p>
+Install with uv</h1>
+<p>We use <a href="https://docs.astral.sh/uv/">uv</a> to manage the Python environment and to build the <span class="tt">pysvzerod</span> Python extension. After <a href="https://docs.astral.sh/uv/getting-started/installation/">installing uv</a>, execute this command in the root folder to create a virtual environment in <span class="tt">.venv</span>, install all dependencies (including the development tooling), and build the current source: </p><div class="fragment"><div class="line">uv sync</div>
+</div><!-- fragment --><p> This is useful when continuously running the integration tests during development. The build is self-contained: uv supplies a compatible Python interpreter (pinned in <span class="tt">.python-version</span>) and the CMake/Ninja build tools, so no system-wide installation of those is required.</p>
+<p>To install only the Python dependencies without building the C++ extension (for example when working on the visualization or GUI tooling), use: </p><div class="fragment"><div class="line">uv sync --no-install-project</div>
+</div><!-- fragment --><p>The application-specific dependencies live in optional dependency groups: use <span class="tt">uv sync --group gui</span> for the <a class="el" href="_g_u_i.html" title="GUI Guide">svZeroDGUI</a> application and <span class="tt">uv sync --group viz</span> for the <a class="el" href="visualization.html" title="Visualization Guide">svZeroDVisualization</a> application.</p>
+<p>Run any command inside the managed environment with <span class="tt">uv run</span>, e.g. <span class="tt">uv run python</span> or <span class="tt">uv run svzerodsolver</span>. uv keeps the environment in sync with <span class="tt">uv.lock</span> automatically.</p>
+<blockquote class="doxtable">
+<p>Prefer plain <span class="tt">pip</span>? The project still builds with <span class="tt">pip install -e .</span>. The development dependencies live in a <a href="https://packaging.python.org/en/latest/specifications/dependency-groups/">dependency group</a>, so install them with <span class="tt">pip install -e . --group dev</span> (pip &gt;= 25.1). </p>
+</blockquote>
 <h1 class="doxsection"><a class="anchor" id="autotoc_md3"></a>
 Contributing to svZeroDSolver</h1>
 <p><b>NOTE: To contribute new developments to the main branch of svZeroDSolver, developers must first open an issue on the svZeroDSolver Github repository to describe the planned changes.</b></p>
@@ -168,13 +174,12 @@ Testing code changes</h1>
 <ul>
 <li>Tests are automatically run as Github workflows when pushing changes to the developer's remote branch on Github. These tests are defined in the <span class="tt">.github/workflows</span> directory.</li>
 <li>It may be helpful and more efficient to run the build tests locally with each incremental change the developer makes. This can be done by following these steps:<ol type="1">
-<li>If you do not have <span class="tt">pytest</span> installed in your virtual environment, install it with <span class="tt">pip install pytest</span></li>
-<li>We first need to build the svZeroDSolver project. This can be done by running <span class="tt">pip install -e .</span> from the svZeroDSolver directory</li>
+<li>Build the svZeroDSolver project and install the test dependencies by running <span class="tt">uv sync</span> from the svZeroDSolver directory. This also makes <span class="tt">pytest</span> available.</li>
 <li>From the main svZeroDSolver directory, <span class="tt">cd tests</span>.</li>
-<li>Now that you are in the <span class="tt">tests</span> directory, run <span class="tt">pytest</span>. The terminal output will show which tests are passing.<ul>
-<li>To run a specific subset of tests matching a certain pattern, e.g., only the calibrator, you can use <span class="tt">pytest -k calibrator</span>.</li>
-<li>To see all simulation output, run <span class="tt">pytest -sv</span>.</li>
-<li>If you want to run the tests using the binaries in the <span class="tt">Release</span> directory instead of the python module, you can call <span class="tt">pytest --coverage</span></li>
+<li>Now that you are in the <span class="tt">tests</span> directory, run <span class="tt">uv run pytest</span>. The terminal output will show which tests are passing.<ul>
+<li>To run a specific subset of tests matching a certain pattern, e.g., only the calibrator, you can use <span class="tt">uv run pytest -k calibrator</span>.</li>
+<li>To see all simulation output, run <span class="tt">uv run pytest -sv</span>.</li>
+<li>If you want to run the tests using the binaries in the <span class="tt">Release</span> directory instead of the python module, you can call <span class="tt">uv run pytest --coverage</span></li>
 </ul>
 </li>
 </ol>
