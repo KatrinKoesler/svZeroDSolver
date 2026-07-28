@@ -72,12 +72,12 @@ double ValveSpline::calculate_beta(double p_in, double p_out, double epsilon,
   double h_01 = -2.0 * pow(s, 3) + 3.0 * pow(s, 2);
   double h_11 = pow(s, 3) - pow(s, 2);
 
-  if (p_in > p_out - 0.5 * epsilon) {
+  if (p_in < p_out - 0.5 * epsilon) {
     return (p_in - p_out) / R_max;
-  } else if (p_in >= p_out - 0.5 * epsilon && p_in < p_out + 0.5 * epsilon) {
+  } else if (p_in < p_out + 0.5 * epsilon) {
     return h_00 * p_0 + h_10 * m_0 * epsilon + h_01 * p_1 +
            h_11 * m_1 * epsilon;
-  } else if (p_in >= p_out + 0.5 * epsilon) {
+  } else {
     return (p_in - p_out) / R_min;
   }
 }
@@ -94,11 +94,11 @@ double ValveSpline::calculate_dbeta(double p_in, double p_out, double epsilon,
   double h_01 = -2.0 * pow(s, 3) + 3.0 * pow(s, 2);
   double h_11 = pow(s, 3) - pow(s, 2);
 
-  if (p_in > p_out - 0.5 * epsilon) {
+  if (p_in < p_out - 0.5 * epsilon) {
     return 1.0 / R_max;
-  } else if (p_in >= p_out - 0.5 * epsilon && p_in < p_out + 0.5 * epsilon) {
+  } else if (p_in < p_out + 0.5 * epsilon) {
     return (1 - s) * (1 / R_max) + s * (1 / R_min);
-  } else if (p_in >= p_out + 0.5 * epsilon) {
+  } else {
     return 1.0 / R_min;
   }
 }
@@ -106,12 +106,12 @@ double ValveSpline::calculate_dbeta(double p_in, double p_out, double epsilon,
 double ValveSpline::set_valve_status(double p_in, double p_out, double epsilon,
                                      double R_max, double R_min) {
   double s = (p_in - p_out + 0.5 * epsilon) / epsilon;
-  if (p_in > p_out - 0.5 * epsilon) {
+  if (p_in < p_out - 0.5 * epsilon) {
     return 0;
-  } else if (p_in >= p_out - 0.5 * epsilon && p_in < p_out + 0.5 * epsilon) {
+  } else if (p_in < p_out + 0.5 * epsilon) {
     return ((1 - s) * (1 / R_max) + s * (1 / R_min) - 1 / R_max) /
            (1 / R_min - 1 / R_max);
-  } else if (p_in >= p_out + 0.5 * epsilon) {
+  } else {
     return 1.0;
   }
 }
@@ -119,11 +119,11 @@ double ValveSpline::set_valve_status(double p_in, double p_out, double epsilon,
 double ValveSpline::dvalve_status(double p_in, double p_out, double epsilon,
                                   double R_max, double R_min) {
   double s = (p_in - p_out + 0.5 * epsilon) / epsilon;
-  if (p_in > p_out - 0.5 * epsilon) {
+  if (p_in < p_out - 0.5 * epsilon) {
     return 0;
-  } else if (p_in >= p_out - 0.5 * epsilon && p_in < p_out + 0.5 * epsilon) {
+  } else if (p_in < p_out + 0.5 * epsilon) {
     return 1 / epsilon;
-  } else if (p_in >= p_out + 0.5 * epsilon) {
+  } else {
     return 0;
   }
 }
