@@ -192,20 +192,46 @@ class ValveSpline : public Block {
       const Eigen::Matrix<double, Eigen::Dynamic, 1>& y,
       const Eigen::Matrix<double, Eigen::Dynamic, 1>& dy) override;
 
+  /**
+   * @brief
+   *
+   * Calculate beta based on current pressure and opening pressure of valve
+   */
+  double calculate_beta(double p_in, double p_out, double epsilon, double R_max,
+                        double R_min);
 
   /**
-   * @brief 
-   * 
-   * Calculate beta based on current pressure and opening pressure of valve
-   */    
-  double calculate_beta(double p, double p_open, double epsilon, double R_max, double R_min); //is P_open P_out?????
+   * @brief
+   *
+   * Calculate dbeta_dy with respect to pressure based on current pressure and
+   * opening pressure of valve
+   */
+  double calculate_dbeta(double p_in, double p_out, double epsilon,
+                         double R_max, double R_min);
+
+  /**
+   * @brief
+   *
+   * Set the valve status
+   */
+  double set_valve_status(double p_in, double p_out, double epsilon,
+                          double R_max, double R_min);
+
+  /**
+   * @brief
+   *
+   * Calculate the derivative of valve status with respect to pressure
+   */
+  double dvalve_status(double p_in, double p_out, double epsilon, double R_max,
+                       double R_min);
+
   /**
    * @brief Number of triplets of element
    *
    * Number of triplets that the element contributes to the global system
    * (relevant for sparse memory reservation)
    */
-  TripletsContributions num_triplets{5, 0, 3};
+  TripletsContributions num_triplets{4, 0, 2};
 };
 
 #endif  // SVZERODSOLVER_MODEL_VALVETANH_HPP_
