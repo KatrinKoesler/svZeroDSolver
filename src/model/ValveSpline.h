@@ -141,12 +141,14 @@
  *
  * ### Parameters
  *
- * Parameter sequence for constructing this block (parameters here from Hirschvogel et al. 2024)
+ * Parameter sequence for constructing this block (parameters here from
+ * Hirschvogel et al. 2024)
  *
  * * `0` Rmax: Maximum (closed) valve resistance
  * * `1` Rmin: Minimum (open) valve resistance
  * * `2` Epsilon: Pressure interval width for spline interpolation between
- *   closed and open valve states; calibrate to pressure differential expected to be available across valve
+ *   closed and open valve states; calibrate to pressure differential expected
+ * to be available across valve
  * * `3` upstream_block: Name of block connected upstream
  * * `4` downstream_block: Name of block connected downstream
  *
