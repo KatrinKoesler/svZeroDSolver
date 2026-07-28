@@ -42,6 +42,7 @@
 #include "ResistiveJunction.h"
 #include "State.h"
 #include "ValveTanh.h"
+#include "ValveSpline.h"
 #include "WindkesselBC.h"
 #include "debug.h"
 
