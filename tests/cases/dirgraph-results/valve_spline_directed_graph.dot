@@ -1,0 +1,11 @@
+strict digraph {
+aortic_valve;
+V1;
+BC0_inlet;
+V0;
+BC1_outlet;
+aortic_valve -> V1;
+V1 -> BC1_outlet;
+BC0_inlet -> V0;
+V0 -> aortic_valve;
+}
