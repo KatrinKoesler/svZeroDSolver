@@ -1,0 +1,133 @@
+{
+  "description": {
+    "description of test case": "Closed loop circulation with right ventricle modeled as sphere and lumped parameter model of vasculature inspired by Regazzoni et al. 2022.",
+    "circuit": "RV -> PV -> pulmonary artery (first compliance then resistance) -> pulmonary vein (compliance then resistance -> TV -> RV"
+  },
+  "simulation_parameters": {
+    "number_of_cardiac_cycles": 10,
+    "number_of_time_pts_per_cardiac_cycle": 5000,
+    "absolute_tolerance": 1e-8,
+    "output_variable_based": true,
+    "steady_initial": false,
+    "output_all_cycles": false,
+    "use_cycle_to_cycle_error": true
+  },
+  "boundary_conditions": [],
+  "vessels": [
+    {
+      "boundary_conditions": {},
+      "vessel_id": 0,
+      "vessel_length": 1.0,
+      "vessel_name": "RV",
+      "zero_d_element_type": "ChamberSphere",
+      "zero_d_element_values": {
+        "rho": 1e3,
+        "thick0": 0.022317634723395277,
+        "radius0": 0.03457500522201688,
+        "sigma_max": 237593.9219611258,
+        "alpha_max": 19.0,
+        "alpha_min": -30.0,
+        "tsys": 0.17,
+        "tdias": 0.484,
+        "steepness": 0.005
+      },
+      "material": {
+        "type": "exponential",
+        "C0": 1.9e3,
+        "C1": 0.11,
+        "C2": 1.9e3,
+        "C3": 0.11,
+        "eta": 250.0
+      }
+    },
+    {
+      "boundary_conditions": {},
+      "vessel_name": "PA compliance",
+      "vessel_id": 1,
+      "vessel_length": 1.0,
+      "zero_d_element_type": "BloodVessel",
+      "zero_d_element_values": {
+        "R_poiseuille": 0.0,
+        "C": 3.0e-9
+      }
+    },
+    {
+      "boundary_conditions": {},
+      "vessel_id": 2,
+      "vessel_length": 1.0,
+      "vessel_name": "PA resistance",
+      "zero_d_element_type": "BloodVessel",
+      "zero_d_element_values": {
+        "R_poiseuille": 2.666e6,
+        "C": 0.0
+      }
+    },
+    {
+      "boundary_conditions": {},
+      "vessel_id": 3,
+      "vessel_length": 1.0,
+      "vessel_name": "PV compliance",
+      "zero_d_element_type": "BloodVessel",
+      "zero_d_element_values": {
+        "R_poiseuille": 0.0,
+        "C": 7.5e-9
+      }
+    },
+    {
+      "boundary_conditions": {},
+      "vessel_id": 4,
+      "vessel_length": 1.0,
+      "vessel_name": "PV resistance",
+      "zero_d_element_type": "BloodVessel",
+      "zero_d_element_values": {
+        "R_poiseuille": 4.666e7,
+        "C": 0.0
+      }
+    }
+  ],
+  "junctions": [
+    {
+      "junction_name": "J_aorta_arteries",
+      "junction_type": "NORMAL_JUNCTION",
+      "inlet_blocks": ["PA compliance"],
+      "outlet_blocks": ["PA resistance"]
+    },
+    {
+      "junction_name": "J_arteries_arterioles",
+      "junction_type": "NORMAL_JUNCTION",
+      "inlet_blocks": ["PA resistance"],
+      "outlet_blocks": ["PV compliance"]
+    },
+    {
+      "junction_name": "J_arterioles_capillaries",
+      "junction_type": "NORMAL_JUNCTION",
+      "inlet_blocks": ["PV compliance"],
+      "outlet_blocks": ["PV resistance"]
+    }
+  ],
+
+  "valves": [
+    {
+      "type": "ValveTanh",
+      "name": "TV",
+      "params": {
+        "Rmin": 0.0,
+        "Rmax": 1.0e10,
+        "Steepness": 0.1,
+        "upstream_block": "PV resistance",
+        "downstream_block": "RV"
+      }
+    },
+    {
+      "type": "ValveTanh",
+      "name": "PV",
+      "params": {
+        "Rmin": 0.0,
+        "Rmax": 1.0e11,
+        "Steepness": 1.0,
+        "upstream_block": "RV",
+        "downstream_block": "PA compliance"
+      }
+    }
+  ]
+}
