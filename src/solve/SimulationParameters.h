@@ -12,7 +12,9 @@
 #include <stdexcept>
 #include <string>
 
+#include "ActivationFunction.h"
 #include "Model.h"
+#include "SphereMaterial.h"
 #include "State.h"
 #include "debug.h"
 
@@ -66,6 +68,9 @@ struct SimulationParameters {
       false};  ///< Running 0D simulation coupled with external solver
   double sim_external_step_size{0.0};  ///< Step size of external solver if
                                        ///< running coupled
+  bool sim_max_iter_error_to_warning{
+      false};  ///< If true, warn instead of throwing when max nonlinear
+               ///< iterations is reached
 };
 
 /// @brief Wrapper class for nlohmann:json with error checking
@@ -138,6 +143,36 @@ class JsonWrapper : public nlohmann::json {
 int generate_block(Model& model, const nlohmann::json& block_params_json,
                    const std::string& block_type, const std::string_view& name,
                    bool internal = false, bool periodic = true);
+
+/**
+ * @brief Create an activation function from JSON (analogous to generate_block)
+ *
+ * Validates keys against the activation type's params, reads scalar
+ * parameters, and returns a created ActivationFunction. Caller associates
+ * it with a chamber block via set_activation_function().
+ *
+ * @param model Model (for cardiac_cycle_period)
+ * @param j JSON object (e.g. chamber_config["activation_function"])
+ * @param chamber_name Chamber name for error messages
+ * @return Unique pointer to the created activation function
+ */
+std::unique_ptr<ActivationFunction> generate_activation_function(
+    Model& model, const nlohmann::json& j, const std::string& chamber_name);
+
+/**
+ * @brief Create a SphereMaterial from JSON (analogous to
+ * generate_activation_function)
+ *
+ * Validates keys against the material type's params, reads scalar parameters,
+ * and returns a created SphereMaterial. Caller associates it with a
+ * ChamberSphere block via set_material().
+ *
+ * @param j            JSON object (e.g. chamber_config["material"])
+ * @param chamber_name Chamber name for error messages
+ * @return Unique pointer to the created material
+ */
+std::unique_ptr<SphereMaterial> generate_material(
+    const nlohmann::json& j, const std::string& chamber_name);
 
 /**
  * @brief Load initial conditions from a JSON configuration

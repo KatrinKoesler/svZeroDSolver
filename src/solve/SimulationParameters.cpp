@@ -139,6 +139,111 @@ int generate_block(Model& model, const nlohmann::json& block_params_json,
   return model.add_block(block, name, block_param_ids, internal);
 }
 
+std::unique_ptr<ActivationFunction> generate_activation_function(
+    Model& model, const nlohmann::json& j, const std::string& chamber_name) {
+  if (j.is_null() || !j.is_object()) {
+    throw std::runtime_error(
+        "Missing 'activation_function' for chamber " + chamber_name +
+        ". Required with structure: {\"type\": \"half_cosine\", \"t_active\": "
+        "0.2, \"t_twitch\": 0.3} (or type piecewise_cosine / two_hill / "
+        "double_tanh / wrapping_cosine / fourier with their parameters).");
+  }
+  if (!j.contains("type") || !j["type"].is_string()) {
+    throw std::runtime_error(
+        "Missing or invalid 'type' in activation_function for chamber " +
+        chamber_name +
+        ". Must be one of: half_cosine, piecewise_cosine, two_hill, "
+        "double_tanh, wrapping_cosine, fourier");
+  }
+
+  // Extract activation function type
+  std::string type_str = j["type"];
+  int err;
+
+  // Create an activation function instance with default parameter values for
+  // this type, then use its parameter schema for validation and reading.
+  auto act_func =
+      ActivationFunction::create_default(type_str, model.cardiac_cycle_period);
+  const auto& input_param_properties = act_func->input_param_properties;
+
+  for (auto& el : j.items()) {
+    if (el.key()[0] == '_') {
+      continue;
+    }
+    if (el.key() == "type") {
+      continue;
+    }
+    if (!has_parameter(input_param_properties, el.key())) {
+      throw std::runtime_error("Unknown parameter " + el.key() +
+                               " defined in activation_function for chamber " +
+                               chamber_name);
+    }
+  }
+
+  // Read parameters
+  for (const auto& param : input_param_properties) {
+    if (!param.second.is_number) {
+      continue;
+    }
+    double val;
+    err = get_param_scalar(j, param.first, param.second, val);
+    if (err) {
+      throw std::runtime_error(
+          "Scalar parameter " + param.first +
+          " is mandatory in activation_function for chamber " + chamber_name);
+    }
+    act_func->set_param(param.first, val);
+  }
+
+  act_func->finalize();
+  return act_func;
+}
+
+std::unique_ptr<SphereMaterial> generate_material(
+    const nlohmann::json& j, const std::string& chamber_name) {
+  if (j.is_null() || !j.is_object()) {
+    throw std::runtime_error(
+        "Missing 'material' for chamber " + chamber_name +
+        ". Required with structure: {\"type\": \"mooney_rivlin\", \"W1\": "
+        "10e3, \"W2\": 40, \"eta\": 10.0} (or type exponential with C0, C1, "
+        "C2, C3, eta).");
+  }
+  if (!j.contains("type") || !j["type"].is_string()) {
+    throw std::runtime_error(
+        "Missing or invalid 'type' in material for chamber " + chamber_name +
+        ". Must be one of: mooney_rivlin, exponential");
+  }
+
+  std::string type_str = j["type"];
+  auto material = SphereMaterial::create(type_str);
+  const auto& input_param_properties = material->input_param_properties;
+
+  for (auto& el : j.items()) {
+    if (el.key()[0] == '_') continue;
+    if (el.key() == "type") continue;
+    if (!has_parameter(input_param_properties, el.key())) {
+      throw std::runtime_error("Unknown parameter " + el.key() +
+                               " defined in material for chamber " +
+                               chamber_name);
+    }
+  }
+
+  int err;
+  for (const auto& param : input_param_properties) {
+    if (!param.second.is_number) continue;
+    double val;
+    err = get_param_scalar(j, param.first, param.second, val);
+    if (err) {
+      throw std::runtime_error(
+          "Scalar parameter " + param.first +
+          " is mandatory in material for chamber " + chamber_name);
+    }
+    material->set_param(param.first, val);
+  }
+
+  return material;
+}
+
 void validate_input(const nlohmann::json& config) {
   if (!config.contains("simulation_parameters")) {
     throw std::runtime_error("Define simulation_parameters");
@@ -178,6 +283,8 @@ SimulationParameters load_simulation_params(const nlohmann::json& config) {
   }
   sim_params.sim_abs_tol = sim_config.value("absolute_tolerance", 1e-8);
   sim_params.sim_nliter = sim_config.value("maximum_nonlinear_iterations", 30);
+  sim_params.sim_max_iter_error_to_warning =
+      sim_config.value("max_iter_error_to_warning", false);
   sim_params.sim_steady_initial = sim_config.value("steady_initial", true);
   sim_params.sim_rho_infty = sim_config.value("rho_infty", 0.5);
   sim_params.output_variable_based =
@@ -193,6 +300,7 @@ SimulationParameters load_simulation_params(const nlohmann::json& config) {
 
 void load_simulation_model(const nlohmann::json& config, Model& model) {
   DEBUG_MSG("Loading model");
+
   // Create list to store block connections while generating blocks
   std::vector<std::tuple<std::string, std::string>> connections;
 
@@ -276,10 +384,10 @@ void create_vessels(
         JsonWrapper(config, component, "vessel_name", i);
     const auto& vessel_values = vessel_config["zero_d_element_values"];
     const std::string vessel_name = vessel_config["vessel_name"];
+    const std::string vessel_type = vessel_config["zero_d_element_type"];
     vessel_id_map.insert({vessel_config["vessel_id"], vessel_name});
 
-    generate_block(model, vessel_values, vessel_config["zero_d_element_type"],
-                   vessel_name);
+    generate_block(model, vessel_values, vessel_type, vessel_name);
 
     // Read connected boundary conditions
     if (vessel_config.contains("boundary_conditions")) {
@@ -540,11 +648,34 @@ void create_chambers(
     Model& model,
     std::vector<std::tuple<std::string, std::string>>& connections,
     const nlohmann::json& config, const std::string& component) {
+  // Set cardiac period from simulation_parameters so activation functions
+  // have it. May already be set by closed_loop_blocks.
+  if (model.cardiac_cycle_period < 0.0 &&
+      config.contains("simulation_parameters") &&
+      config["simulation_parameters"].contains("cardiac_period")) {
+    double period = config["simulation_parameters"]["cardiac_period"];
+    if (period > 0.0) {
+      model.cardiac_cycle_period = period;
+    }
+  }
+
   for (size_t i = 0; i < config[component].size(); i++) {
     const auto& chamber_config = JsonWrapper(config, component, "name", i);
     std::string chamber_type = chamber_config["type"];
     std::string chamber_name = chamber_config["name"];
     generate_block(model, chamber_config["values"], chamber_type, chamber_name);
+
+    auto act_func = generate_activation_function(
+        model, chamber_config["activation_function"], chamber_name);
+    model.get_block(chamber_name)->set_activation_function(std::move(act_func));
+
+    // Create and set material for chamber types that use one
+    if (chamber_type == "ChamberSphere") {
+      auto mat =
+          generate_material(chamber_config["material"], chamber_name);
+      model.get_block(chamber_name)->set_material(std::move(mat));
+    }
+
     DEBUG_MSG("Created chamber " << chamber_name);
   }
 }

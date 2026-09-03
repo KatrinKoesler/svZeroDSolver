@@ -13,7 +13,9 @@
 #include <map>
 #include <vector>
 
+#include "ActivationFunction.h"
 #include "BlockType.h"
+#include "SphereMaterial.h"
 #include "DOFHandler.h"
 #include "Parameter.h"
 #include "SparseSystem.h"
@@ -24,7 +26,7 @@
  * to the global system.
  */
 struct TripletsContributions {
-  TripletsContributions() {};
+  TripletsContributions(){};
   /**
    * @brief Set the number of triplets that the element contributes
    * to the global system.
@@ -32,7 +34,7 @@ struct TripletsContributions {
    * @param E Contributions to E matrix
    * @param D Contributions to dC/dy matrix
    */
-  TripletsContributions(int F, int E, int D) : F(F), E(E), D(D) {};
+  TripletsContributions(int F, int E, int D) : F(F), E(E), D(D){};
   /**
    * @brief Set the number of triplets that the element contributes
    * to the global system.
@@ -283,6 +285,31 @@ class Block {
    * @return TripletsContributions Number of triplets of element
    */
   virtual TripletsContributions get_num_triplets();
+
+  /**
+   * @brief Set activation function (for chamber blocks that use one).
+   *
+   * Default no-op. Overridden by ChamberElastanceInductor and
+   * LinearElastanceChamber to take ownership of the activation function.
+   *
+   * @param af Unique pointer to the activation function (caller transfers
+   * ownership)
+   */
+  virtual void set_activation_function(std::unique_ptr<ActivationFunction> af) {
+    (void)af;  // Included to avoid unused parameter warning
+  }
+
+  /**
+   * @brief Set wall material (for ChamberSphere blocks).
+   *
+   * Default no-op. Overridden by ChamberSphere to take ownership of the
+   * material.
+   *
+   * @param m Unique pointer to the material (caller transfers ownership)
+   */
+  virtual void set_material(std::unique_ptr<SphereMaterial> m) {
+    (void)m;  // Included to avoid unused parameter warning
+  }
 };
 
 #endif

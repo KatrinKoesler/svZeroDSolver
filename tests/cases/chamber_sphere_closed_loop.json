@@ -1,7 +1,7 @@
 {
   "description": {
     "description of test case": "Closed loop circulation with left ventricle modeled as sphere and lumped parameter model of vasculature inspired by Sharifi et al. 2024.",
-    "circuit": "LV -> AV -> aorta -> arteries -> arterioles -> capillaries -> venules -> veins -> RV -> MV -> LV"
+    "circuit": "LV -> AV -> aorta -> arteries -> arterioles -> capillaries -> venules -> veins -> MV -> LV"
   },
   "simulation_parameters": {
     "number_of_cardiac_cycles": 10,
@@ -10,33 +10,10 @@
     "output_variable_based": true,
     "steady_initial": false,
     "output_all_cycles": false,
-    "use_cycle_to_cycle_error": true
+    "max_iter_error_to_warning": true
   },
   "boundary_conditions": [],
   "vessels": [
-    {
-      "boundary_conditions": {},
-      "vessel_id": 0,
-      "vessel_length": 1.0,
-      "vessel_name": "LV",
-      "zero_d_element_type": "ChamberSphere_expmat",
-      "zero_d_element_values": {
-        "rho": 1e3,
-        "thick0": 0.022317634723395277,
-        "radius0": 0.03457500522201688,
-        "C0": 1.9e3,
-        "C1": 0.11,
-        "C2": 1.9e3,
-        "C3": 0.11,
-        "eta": 250.0,
-        "sigma_max": 237593.9219611258,
-        "alpha_max": 19.0,
-        "alpha_min": -30.0,
-        "tsys": 0.17,
-        "tdias": 0.484,
-        "steepness": 0.005
-      }
-    },
     {
       "boundary_conditions": {},
       "vessel_name": "aorta",
@@ -104,6 +81,34 @@
       }
     }
   ],
+  "chambers": [
+    {
+      "type": "ChamberSphere",
+      "name": "LV",
+      "values": {
+        "rho": 1e3,
+        "thick0": 0.022317634723395277,
+        "radius0": 0.03457500522201688,
+        "eta": 250.0,
+        "sigma_max": 237593.9219611258,
+        "alpha_max": 19.0,
+        "alpha_min": -30.0
+      },
+      "activation_function": {
+        "type": "double_tanh",
+        "tsys": 0.17,
+        "tdias": 0.484,
+        "steepness": 0.005
+      },
+      "material": {
+        "type": "exponential",
+        "C0": 1.9e3,
+        "C1": 0.11,
+        "C2": 2.1e3,
+        "C3": 0.15
+      }
+    }
+  ],
   "junctions": [
     {
       "junction_name": "J_aorta_arteries",
@@ -144,7 +149,7 @@
       "params": {
         "Rmin": 0.0,
         "Rmax": 1.0e10,
-        "Steepness": 0.1,
+        "Steepness": 1.0,
         "upstream_block": "veins",
         "downstream_block": "LV"
       }
@@ -155,7 +160,7 @@
       "params": {
         "Rmin": 0.0,
         "Rmax": 1.0e11,
-        "Steepness": 1.0,
+        "Steepness": 10.0,
         "upstream_block": "LV",
         "downstream_block": "aorta"
       }
