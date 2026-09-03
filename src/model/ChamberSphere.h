@@ -102,7 +102,7 @@
  * the material model for the elastic stress term \f$S_\text{el}(r, r_0)\f$ 
  * (see \ref SphereMaterial, e.g. `exponential`, `mooney_rivlin`).
  *
- * ### Usage in json configuration file (with example material)
+ * ### Usage in json configuration file
  *
  *     "chambers": [
  *        {
