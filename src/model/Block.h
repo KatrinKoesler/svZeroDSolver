@@ -15,10 +15,10 @@
 
 #include "ActivationFunction.h"
 #include "BlockType.h"
-#include "SphereMaterial.h"
 #include "DOFHandler.h"
 #include "Parameter.h"
 #include "SparseSystem.h"
+#include "SphereMaterial.h"
 #include "State.h"
 
 /**
