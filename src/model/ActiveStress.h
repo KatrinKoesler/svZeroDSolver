@@ -236,7 +236,7 @@ class StrainIndependentActiveStress : public ActiveStress {
 };
 
 /**
- * @brief Strain-dependent active stress model (Caruel et al. 2013)
+ * @brief Strain-dependent active stress model from \cite caruel13
  *
  * Owns 5 extra equations and 4 extra variables (\f$e_c, \tau_c, k_c,
  * \omega\f$, in that order):
@@ -327,7 +327,7 @@ class StrainDependentActiveStress : public ActiveStress {
    * @param u Reaction-rate signal at the current time
    */
   void update_active_stress_values(double e_c, double u);
-  
+
   double n_0_ = 0.0;      // activation strain-dependence
   double m_0_ = 0.0;      // relaxation strain-dependence
   double u_plus_ = 0.0;   // positive part of the reaction-rate signal
