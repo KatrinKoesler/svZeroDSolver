@@ -78,6 +78,17 @@ class ActivationFunction {
   void set_param(const std::string& name, double value);
 
   /**
+   * @brief Set a vector-valued parameter value by name.
+   *
+   * Calling function must validate the parameter name and value
+   *
+   * @param name Parameter name
+   * @param value Parameter value
+   */
+  void set_param_vector(const std::string& name,
+                        const std::vector<double>& value);
+
+  /**
    * @brief Called after all parameters are set (e.g. by loader).
    *
    * Default no-op. TwoHillActivation overrides to recompute normalization.
@@ -91,9 +102,14 @@ class ActivationFunction {
   double cardiac_period_;
 
   /**
-   * @brief Map of parameter names to their values
+   * @brief Map of scalar parameter names to their values
    */
   std::map<std::string, double> params_;
+
+  /**
+   * @brief Map of vector-valued parameter names to their values
+   */
+  std::map<std::string, std::vector<double>> params_vec_;
 };
 
 /**
@@ -307,10 +323,13 @@ class FourierActivation : public ActivationFunction {
 /**
  * @brief Piecewise-linear activation rate activation signal
  *
- * Reproduces the activation rate signal \f$u(t)\f$ driving the
- * \ref StrainDependentActiveStress model (Caruel et al. 2013). It is a piecewise-linear function of time within the
- * cardiac cycle whose sign is meaningful (split into positive/negative parts
- * by the strain-dependent active stress model).
+ * Reproduces an activation rate signal \f$u(t)\f$ which is a
+ * piecewise-linear function of time within the cardiac cycle, given as a
+ * break point table (`u_t`/`u_values`) and evaluated with \ref
+ * linear_interpolate. The sign is meaningful for the strain-dependent active 
+ * stress model (which splits the signal into positive/negative parts).
+ *
+ * Parameters: `u_t`, `u_values`
  */
 class PiecewiseRateActivation : public ActivationFunction {
  public:
@@ -320,7 +339,9 @@ class PiecewiseRateActivation : public ActivationFunction {
    * @param cardiac_period Cardiac cycle period
    */
   explicit PiecewiseRateActivation(double cardiac_period)
-      : ActivationFunction(cardiac_period, {}) {}
+      : ActivationFunction(cardiac_period,
+                           {{"u_t", InputParameter(false, true)},
+                            {"u_values", InputParameter(false, true)}}) {}
 
   double compute(double time) override;
 };

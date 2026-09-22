@@ -165,6 +165,15 @@ class ActiveStress {
   void set_param(const std::string& name, double value);
 
   /**
+   * @brief Set a vector-valued parameter value by name
+   *
+   * @param name Parameter name
+   * @param value Parameter value
+   */
+  void set_param_vector(const std::string& name,
+                        const std::vector<double>& value);
+
+  /**
    * @brief Factory: create an active stress model from a type string
    *
    * @param type_str One of: "strain_independent", "strain_dependent"
@@ -174,9 +183,14 @@ class ActiveStress {
 
  protected:
   /**
-   * @brief Map of parameter names to their values
+   * @brief Map of scalar parameter names to their values
    */
   std::map<std::string, double> params_;
+
+  /**
+   * @brief Map of vector-valued parameter names to their values
+   */
+  std::map<std::string, std::vector<double>> params_vec_;
 };
 
 /**
@@ -246,11 +260,14 @@ class StrainIndependentActiveStress : public ActiveStress {
  * |u|_+ + k_c \dot{e}_c
  * \f]
  * where \f$n_0\f$ (activation strain-dependence) and \f$m_0\f$ (relaxation
- * strain-dependence) are piecewise functions of \f$e_c\f$, and \f$u(t)\f$ is
- * a reaction-rate signal supplied by the chamber's ActivationFunction (e.g.
- * \ref PiecewiseRateActivation).
+ * strain-dependence) are piecewise-linear functions of \f$e_c\f$, given as
+ * break point tables (`n0_e_c`/`n0_values` and `m0_e_c`/`m0_values`) and
+ * evaluated with \ref linear_interpolate, and \f$u(t)\f$ is a reaction-rate
+ * signal supplied by the chamber's ActivationFunction (e.g. \ref
+ * PiecewiseRateActivation).
  *
- * Parameters: `E_s`, `mu`, `alpha_r`, `alpha`, `k_0`, `sigma_0`
+ * Parameters: `E_s`, `mu`, `alpha_r`, `alpha`, `k_0`, `sigma_0`, `n0_e_c`,
+ * `n0_values`, `m0_e_c`, `m0_values`
  */
 class StrainDependentActiveStress : public ActiveStress {
  public:
@@ -260,7 +277,11 @@ class StrainDependentActiveStress : public ActiveStress {
                       {"alpha_r", InputParameter()},
                       {"alpha", InputParameter()},
                       {"k_0", InputParameter()},
-                      {"sigma_0", InputParameter()}}) {}
+                      {"sigma_0", InputParameter()},
+                      {"n0_e_c", InputParameter(false, true)},
+                      {"n0_values", InputParameter(false, true)},
+                      {"m0_e_c", InputParameter(false, true)},
+                      {"m0_values", InputParameter(false, true)}}) {}
 
   int num_extra_vars() const override { return 4; }
   std::list<std::string> extra_var_names() const override {
@@ -306,7 +327,7 @@ class StrainDependentActiveStress : public ActiveStress {
    * @param u Reaction-rate signal at the current time
    */
   void update_active_stress_values(double e_c, double u);
-
+  
   double n_0_ = 0.0;      // activation strain-dependence
   double m_0_ = 0.0;      // relaxation strain-dependence
   double u_plus_ = 0.0;   // positive part of the reaction-rate signal

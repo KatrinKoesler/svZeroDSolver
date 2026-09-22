@@ -30,6 +30,11 @@ void ActivationFunction::set_param(const std::string& name, double value) {
   params_[name] = value;
 }
 
+void ActivationFunction::set_param_vector(const std::string& name,
+                                          const std::vector<double>& value) {
+  params_vec_[name] = value;
+}
+
 std::unique_ptr<ActivationFunction> ActivationFunction::create_default(
     const std::string& type_str, double cardiac_period) {
   if (type_str == "half_cosine") {
@@ -262,23 +267,6 @@ double FourierActivation::compute(double time) {
 
 double PiecewiseRateActivation::compute(double time) {
   const double t_in_cycle = std::fmod(time, cardiac_period_);
-  double u;
-  if (t_in_cycle <= 0.1) {
-    u = -3.2;
-  } else if (t_in_cycle > 0.1 && t_in_cycle <= 0.27) {
-    u = -3.2 + 38.2 / 0.17 * (t_in_cycle - 0.1);
-  } else if (t_in_cycle > 0.27 && t_in_cycle <= 0.32) {
-    u = 35;
-  } else if (t_in_cycle > 0.32 && t_in_cycle <= 0.34) {
-    u = 35 - (35 / 0.02) * (t_in_cycle - 0.32);
-  } else if (t_in_cycle > 0.34 && t_in_cycle <= 0.46) {
-    u = 24 - 12 / 0.12 * (t_in_cycle - 0.1);
-  } else if (t_in_cycle > 0.46 && t_in_cycle <= 0.59) {
-    u = -12;
-  } else if (t_in_cycle > 0.59 && t_in_cycle <= 0.6) {
-    u = -443.2 + 8.8 / 0.01 * (t_in_cycle - 0.1);
-  } else {
-    u = -3.2;
-  }
-  return u;
+  return linear_interpolate(t_in_cycle, params_vec_.at("u_t"),
+                            params_vec_.at("u_values"));
 }

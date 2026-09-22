@@ -146,14 +146,15 @@ std::unique_ptr<ActivationFunction> generate_activation_function(
         "Missing 'activation_function' for chamber " + chamber_name +
         ". Required with structure: {\"type\": \"half_cosine\", \"t_active\": "
         "0.2, \"t_twitch\": 0.3} (or type piecewise_cosine / two_hill / "
-        "double_tanh / wrapping_cosine / fourier with their parameters).");
+        "double_tanh / wrapping_cosine / fourier / piecewise_rate with their "
+        "parameters).");
   }
   if (!j.contains("type") || !j["type"].is_string()) {
     throw std::runtime_error(
         "Missing or invalid 'type' in activation_function for chamber " +
         chamber_name +
         ". Must be one of: half_cosine, piecewise_cosine, two_hill, "
-        "double_tanh, wrapping_cosine, fourier");
+        "double_tanh, wrapping_cosine, fourier, piecewise_rate");
   }
 
   // Extract activation function type
@@ -183,6 +184,17 @@ std::unique_ptr<ActivationFunction> generate_activation_function(
   // Read parameters
   for (const auto& param : input_param_properties) {
     if (!param.second.is_number) {
+      continue;
+    }
+    if (param.second.is_array) {
+      std::vector<double> val;
+      err = get_param_vector(j, param.first, param.second, val);
+      if (err) {
+        throw std::runtime_error(
+            "Array parameter " + param.first +
+            " is mandatory in activation_function for chamber " + chamber_name);
+      }
+      act_func->set_param_vector(param.first, val);
       continue;
     }
     double val;
@@ -252,7 +264,7 @@ std::unique_ptr<ActiveStress> generate_active_stress(
         ". Required with structure: {\"type\": \"strain_independent\", "
         "\"alpha_max\": 30.0, \"alpha_min\": -30.0, \"sigma_max\": 185e3} "
         "(or type strain_dependent with E_s, mu, alpha_r, alpha, k_0, "
-        "sigma_0).");
+        "sigma_0, n0_e_c, n0_values, m0_e_c, m0_values).");
   }
   if (!j.contains("type") || !j["type"].is_string()) {
     throw std::runtime_error(
@@ -278,6 +290,17 @@ std::unique_ptr<ActiveStress> generate_active_stress(
   int err;
   for (const auto& param : input_param_properties) {
     if (!param.second.is_number) continue;
+    if (param.second.is_array) {
+      std::vector<double> val;
+      err = get_param_vector(j, param.first, param.second, val);
+      if (err) {
+        throw std::runtime_error("Array parameter " + param.first +
+                                 " is mandatory in active_stress for chamber " +
+                                 chamber_name);
+      }
+      active_stress->set_param_vector(param.first, val);
+      continue;
+    }
     double val;
     err = get_param_scalar(j, param.first, param.second, val);
     if (err) {

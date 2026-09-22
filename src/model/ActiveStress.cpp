@@ -21,6 +21,11 @@ void ActiveStress::set_param(const std::string& name, double value) {
   params_[name] = value;
 }
 
+void ActiveStress::set_param_vector(const std::string& name,
+                                    const std::vector<double>& value) {
+  params_vec_[name] = value;
+}
+
 std::unique_ptr<ActiveStress> ActiveStress::create(
     const std::string& type_str) {
   if (type_str == "strain_independent") {
@@ -109,27 +114,12 @@ void StrainDependentActiveStress::update_constant(
 
 void StrainDependentActiveStress::update_active_stress_values(double e_c,
                                                                double u) {
-  // activation strain-dependence
-  if (e_c > -0.4 && e_c <= 0.3) {
-    n_0_ = 0.22 + 0.53 * e_c;
-  } else if (e_c > 0.3 && e_c <= 1.0) {
-    n_0_ = 0.112857125 + 0.8871428571 * e_c;
-  } else if (e_c > 1.0 && e_c <= 1.3) {
-    n_0_ = 1;
-  } else if (e_c > 1.3 && e_c <= 2.4) {
-    n_0_ = 2.182 - 0.9091 * e_c;
-  } else {
-    n_0_ = 0.0;
-  }
-
-  // relaxation strain-dependence
-  if (e_c <= 0.95) {
-    m_0_ = 1.87;
-  } else if (e_c > 0.95 && e_c <= 1.0) {
-    m_0_ = 18.4 - 17.4 * e_c;
-  } else {
-    m_0_ = 1.0;
-  }
+  // activation and relaxation strain-dependence, each a piecewise-linear
+  // function of e_c given by an (e_c, value) break point table
+  n_0_ = linear_interpolate(e_c, params_vec_.at("n0_e_c"),
+                            params_vec_.at("n0_values"));
+  m_0_ = linear_interpolate(e_c, params_vec_.at("m0_e_c"),
+                            params_vec_.at("m0_values"));
 
   if (u >= 0.0) {
     u_plus_ = u;
