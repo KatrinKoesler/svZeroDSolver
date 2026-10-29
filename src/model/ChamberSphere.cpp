@@ -24,6 +24,19 @@ void ChamberSphere::setup_dofs(DOFHandler& dofhandler) {
         "ChamberSphere '" + get_name() +
         "': material not set. Provide a \"material\" JSON block.");
   }
+  const ActivationSignalType provided_signal = activation_function_->signal_type();
+  const ActivationSignalType required_signal = active_stress_->required_signal_type();
+  if (provided_signal != required_signal) {
+    throw std::runtime_error(
+        "ChamberSphere '" + get_name() + "': active_stress model requires a " +
+        (required_signal == ActivationSignalType::rate
+             ? "rate-type (e.g. piecewise_rate)"
+             : "normalized (e.g. half_cosine)") +
+        " activation function, but got a " +
+        (provided_signal == ActivationSignalType::rate ? "rate-type"
+                                                        : "normalized") +
+        " one.");
+  }
 
   std::list<std::string> internal_var_names = {"radius", "velo", "stress",
                                                "tau", "volume"};

@@ -17,6 +17,20 @@
 #include "ParameterHolder.h"
 
 /**
+ * @brief Type of signal an ActivationFunction produces
+ *
+ * Used to catch mismatched activation_function/active_stress pairings:
+ * an ActiveStress model declares the signal type it needs via
+ * \ref ActiveStress::required_signal_type, and ChamberSphere::setup_dofs
+ * checks it against the chamber's ActivationFunction::signal_type.
+ */
+enum class ActivationSignalType {
+  normalized,  ///< f(t) in [0, 1], used by most activation functions
+  rate         ///< Signed reaction-rate signal u(t), used by \ref
+               ///< PiecewiseRateActivation
+};
+
+/**
  * @brief Base class for activation functions
  *
  * Activation functions compute the activation value (between 0 and 1) at a
@@ -43,6 +57,17 @@ class ActivationFunction : public ParameterHolder {
    * @return Activation value between 0 and 1
    */
   virtual double compute(double time) = 0;
+
+  /**
+   * @brief Type of signal this activation function's compute() produces
+   *
+   * @return \ref ActivationSignalType::normalized for all activation
+   * functions with function values between [0;1] and \ref ActivationSignalType::rate 
+   * for \ref PiecewiseRateActivation, which returns a signed reaction-rate signal.
+   */
+  virtual ActivationSignalType signal_type() const {
+    return ActivationSignalType::normalized;
+  }
 
   /**
    * @brief Create a default activation function from activation function type
@@ -301,6 +326,10 @@ class PiecewiseRateActivation : public ActivationFunction {
   double compute(double time) override;
 
   void finalize() override;
+
+  ActivationSignalType signal_type() const override {
+    return ActivationSignalType::rate;
+  }
 };
 
 #endif  // SVZERODSOLVER_MODEL_ACTIVATIONFUNCTION_HPP_

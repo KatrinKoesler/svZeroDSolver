@@ -15,6 +15,7 @@
 #include <string>
 #include <vector>
 
+#include "ActivationFunction.h"
 #include "Parameter.h"
 #include "ParameterHolder.h"
 #include "SparseSystem.h"
@@ -148,6 +149,17 @@ class ActiveStress : public ParameterHolder {
       double activation_signal) = 0;
 
   /**
+   * @brief Type of activation signal this active stress model needs
+   *
+   * Checked against the chamber's ActivationFunction::signal_type in
+   * ChamberSphere::setup_dofs to catch mismatched pairings (e.g.
+   * strain_dependent active stress with a normalized activation function).
+   *
+   * @return The required ActivationSignalType
+   */
+  virtual ActivationSignalType required_signal_type() const = 0;
+
+  /**
    * @brief Factory: create an active stress model from a type string
    *
    * @param type_str One of: "strain_independent", "strain_dependent"
@@ -176,6 +188,10 @@ class StrainIndependentActiveStress : public ActiveStress {
                       {"sigma_max", InputParameter()}}) {}
 
   int num_extra_equations() const override { return 1; }
+
+  ActivationSignalType required_signal_type() const override {
+    return ActivationSignalType::normalized;
+  }
 
   void update_constant(SparseSystem& system,
                        const std::vector<int>& global_eqn_ids,
@@ -251,6 +267,10 @@ class StrainDependentActiveStress : public ActiveStress {
     return {"e_c", "tau_c", "k_c", "omega"};
   }
   int num_extra_equations() const override { return 5; }
+
+  ActivationSignalType required_signal_type() const override {
+    return ActivationSignalType::rate;
+  }
 
   void update_constant(SparseSystem& system,
                        const std::vector<int>& global_eqn_ids,
