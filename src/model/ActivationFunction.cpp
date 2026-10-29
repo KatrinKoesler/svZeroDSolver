@@ -15,25 +15,8 @@ ActivationFunction::ActivationFunction(
     double cardiac_period,
     const std::vector<std::pair<std::string, InputParameter>>&
         input_param_properties)
-    : cardiac_period_(cardiac_period),
-      input_param_properties(input_param_properties) {
-  // Initialize parameters with default values
-  for (const auto& p : this->input_param_properties) {
-    if (p.second.is_number) {
-      double default_val = p.second.is_optional ? p.second.default_val : 0.0;
-      params_[p.first] = default_val;
-    }
-  }
-}
-
-void ActivationFunction::set_param(const std::string& name, double value) {
-  params_[name] = value;
-}
-
-void ActivationFunction::set_param_vector(const std::string& name,
-                                          const std::vector<double>& value) {
-  params_vec_[name] = value;
-}
+    : ParameterHolder(input_param_properties),
+      cardiac_period_(cardiac_period) {}
 
 std::unique_ptr<ActivationFunction> ActivationFunction::create_default(
     const std::string& type_str, double cardiac_period) {

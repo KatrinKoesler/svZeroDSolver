@@ -41,6 +41,61 @@ bool has_parameter(
   return false;
 }
 
+namespace {
+
+/**
+ * @brief Read a chamber sub-component's parameters from its JSON block into
+ * it.
+ *
+ * @param j JSON block for the component (e.g. "activation_function")
+ * @param comp Component to read parameters into, already created via its
+ * factory with its type-specific input_param_properties
+ * @param component_label Name of the component block, used in error messages
+ * (e.g. "activation_function", "material", "active_stress")
+ * @param chamber_name Name of the chamber the component belongs to, used in
+ * error messages
+ */
+void read_component_params(const nlohmann::json& j, ParameterHolder& comp,
+                           const std::string& component_label,
+                           const std::string& chamber_name) {
+  const auto& props = comp.input_param_properties;
+
+  // Check that all keys defined in the JSON block are valid parameters
+  for (auto& el : j.items()) {
+    if (el.key()[0] == '_' || el.key() == "type") continue;
+    if (!has_parameter(props, el.key())) {
+      throw std::runtime_error("Unknown parameter " + el.key() + " defined in " +
+                               component_label + " for chamber " + chamber_name);
+    }
+  }
+
+  // Read all parameters declared by the component
+  for (const auto& param : props) {
+    if (!param.second.is_number) continue;
+    if (param.second.is_array) {
+      std::vector<double> val;
+      if (get_param_vector(j, param.first, param.second, val)) {
+        throw std::runtime_error("Array parameter " + param.first +
+                                 " is mandatory in " + component_label +
+                                 " for chamber " + chamber_name);
+      }
+      comp.set_param_vector(param.first, val);
+    } else {
+      double val;
+      if (get_param_scalar(j, param.first, param.second, val)) {
+        throw std::runtime_error("Scalar parameter " + param.first +
+                                 " is mandatory in " + component_label +
+                                 " for chamber " + chamber_name);
+      }
+      comp.set_param(param.first, val);
+    }
+  }
+
+  comp.finalize();
+}
+
+}  // namespace
+
 int generate_block(Model& model, const nlohmann::json& block_params_json,
                    const std::string& block_type, const std::string_view& name,
                    bool internal, bool periodic) {
@@ -159,55 +214,12 @@ std::unique_ptr<ActivationFunction> generate_activation_function(
 
   // Extract activation function type
   std::string type_str = j["type"];
-  int err;
 
   // Create an activation function instance with default parameter values for
   // this type, then use its parameter schema for validation and reading.
   auto act_func =
       ActivationFunction::create_default(type_str, model.cardiac_cycle_period);
-  const auto& input_param_properties = act_func->input_param_properties;
-
-  for (auto& el : j.items()) {
-    if (el.key()[0] == '_') {
-      continue;
-    }
-    if (el.key() == "type") {
-      continue;
-    }
-    if (!has_parameter(input_param_properties, el.key())) {
-      throw std::runtime_error("Unknown parameter " + el.key() +
-                               " defined in activation_function for chamber " +
-                               chamber_name);
-    }
-  }
-
-  // Read parameters
-  for (const auto& param : input_param_properties) {
-    if (!param.second.is_number) {
-      continue;
-    }
-    if (param.second.is_array) {
-      std::vector<double> val;
-      err = get_param_vector(j, param.first, param.second, val);
-      if (err) {
-        throw std::runtime_error(
-            "Array parameter " + param.first +
-            " is mandatory in activation_function for chamber " + chamber_name);
-      }
-      act_func->set_param_vector(param.first, val);
-      continue;
-    }
-    double val;
-    err = get_param_scalar(j, param.first, param.second, val);
-    if (err) {
-      throw std::runtime_error(
-          "Scalar parameter " + param.first +
-          " is mandatory in activation_function for chamber " + chamber_name);
-    }
-    act_func->set_param(param.first, val);
-  }
-
-  act_func->finalize();
+  read_component_params(j, *act_func, "activation_function", chamber_name);
   return act_func;
 }
 
@@ -228,31 +240,7 @@ std::unique_ptr<SphereMaterial> generate_material(
 
   std::string type_str = j["type"];
   auto material = SphereMaterial::create(type_str);
-  const auto& input_param_properties = material->input_param_properties;
-
-  for (auto& el : j.items()) {
-    if (el.key()[0] == '_') continue;
-    if (el.key() == "type") continue;
-    if (!has_parameter(input_param_properties, el.key())) {
-      throw std::runtime_error("Unknown parameter " + el.key() +
-                               " defined in material for chamber " +
-                               chamber_name);
-    }
-  }
-
-  int err;
-  for (const auto& param : input_param_properties) {
-    if (!param.second.is_number) continue;
-    double val;
-    err = get_param_scalar(j, param.first, param.second, val);
-    if (err) {
-      throw std::runtime_error(
-          "Scalar parameter " + param.first +
-          " is mandatory in material for chamber " + chamber_name);
-    }
-    material->set_param(param.first, val);
-  }
-
+  read_component_params(j, *material, "material", chamber_name);
   return material;
 }
 
@@ -275,42 +263,7 @@ std::unique_ptr<ActiveStress> generate_active_stress(
 
   std::string type_str = j["type"];
   auto active_stress = ActiveStress::create(type_str);
-  const auto& input_param_properties = active_stress->input_param_properties;
-
-  for (auto& el : j.items()) {
-    if (el.key()[0] == '_') continue;
-    if (el.key() == "type") continue;
-    if (!has_parameter(input_param_properties, el.key())) {
-      throw std::runtime_error("Unknown parameter " + el.key() +
-                               " defined in active_stress for chamber " +
-                               chamber_name);
-    }
-  }
-
-  int err;
-  for (const auto& param : input_param_properties) {
-    if (!param.second.is_number) continue;
-    if (param.second.is_array) {
-      std::vector<double> val;
-      err = get_param_vector(j, param.first, param.second, val);
-      if (err) {
-        throw std::runtime_error("Array parameter " + param.first +
-                                 " is mandatory in active_stress for chamber " +
-                                 chamber_name);
-      }
-      active_stress->set_param_vector(param.first, val);
-      continue;
-    }
-    double val;
-    err = get_param_scalar(j, param.first, param.second, val);
-    if (err) {
-      throw std::runtime_error(
-          "Scalar parameter " + param.first +
-          " is mandatory in active_stress for chamber " + chamber_name);
-    }
-    active_stress->set_param(param.first, val);
-  }
-
+  read_component_params(j, *active_stress, "active_stress", chamber_name);
   return active_stress;
 }
 

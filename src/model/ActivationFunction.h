@@ -9,12 +9,12 @@
 #ifndef SVZERODSOLVER_MODEL_ACTIVATIONFUNCTION_HPP_
 #define SVZERODSOLVER_MODEL_ACTIVATIONFUNCTION_HPP_
 
-#include <map>
 #include <memory>
 #include <string>
 #include <vector>
 
 #include "Parameter.h"
+#include "ParameterHolder.h"
 
 /**
  * @brief Base class for activation functions
@@ -23,15 +23,8 @@
  * given time point within a cardiac cycle. These are used to modulate
  * chamber elastance over time.
  */
-class ActivationFunction {
+class ActivationFunction : public ParameterHolder {
  public:
-  /**
-   * @brief Properties of the input parameters for this activation function
-   * [(name, InputParameter), ...]
-   */
-  const std::vector<std::pair<std::string, InputParameter>>
-      input_param_properties;
-
   /**
    * @brief Construct activation function
    *
@@ -42,11 +35,6 @@ class ActivationFunction {
   ActivationFunction(double cardiac_period,
                      const std::vector<std::pair<std::string, InputParameter>>&
                          input_param_properties);
-
-  /**
-   * @brief Virtual destructor
-   */
-  virtual ~ActivationFunction() = default;
 
   /**
    * @brief Compute activation value at given time
@@ -67,49 +55,11 @@ class ActivationFunction {
   static std::unique_ptr<ActivationFunction> create_default(
       const std::string& type_str, double cardiac_period);
 
-  /**
-   * @brief Set a scalar parameter value by name.
-   *
-   * Calling function must validate the parameter name and value
-   *
-   * @param name Parameter name
-   * @param value Parameter value
-   */
-  void set_param(const std::string& name, double value);
-
-  /**
-   * @brief Set a vector-valued parameter value by name.
-   *
-   * Calling function must validate the parameter name and value
-   *
-   * @param name Parameter name
-   * @param value Parameter value
-   */
-  void set_param_vector(const std::string& name,
-                        const std::vector<double>& value);
-
-  /**
-   * @brief Called after all parameters are set (e.g. by loader).
-   *
-   * Default no-op. TwoHillActivation overrides to recompute normalization.
-   */
-  virtual void finalize() {}
-
  protected:
   /**
    * @brief Time duration of one cardiac cycle
    */
   double cardiac_period_;
-
-  /**
-   * @brief Map of scalar parameter names to their values
-   */
-  std::map<std::string, double> params_;
-
-  /**
-   * @brief Map of vector-valued parameter names to their values
-   */
-  std::map<std::string, std::vector<double>> params_vec_;
 };
 
 /**

@@ -11,12 +11,12 @@
 
 #include <Eigen/Core>
 #include <list>
-#include <map>
 #include <memory>
 #include <string>
 #include <vector>
 
 #include "Parameter.h"
+#include "ParameterHolder.h"
 #include "SparseSystem.h"
 
 /**
@@ -36,7 +36,7 @@
  * <this model's equations...>`, so the offsets below are invariant across
  * ActiveStress subclasses.
  */
-class ActiveStress {
+class ActiveStress : public ParameterHolder {
  public:
   /**
    * @name Fixed layout of ChamberSphere's always-present ("core") state
@@ -62,21 +62,12 @@ class ActiveStress {
   ///@}
 
   /**
-   * @brief Properties of the input parameters for this active stress model
-   * [(name, InputParameter), ...]
-   */
-  const std::vector<std::pair<std::string, InputParameter>>
-      input_param_properties;
-
-  /**
    * @brief Construct an ActiveStress model
    *
    * @param props Parameter name/spec pairs for this active stress type
    */
   explicit ActiveStress(
       const std::vector<std::pair<std::string, InputParameter>>& props);
-
-  virtual ~ActiveStress() = default;
 
   /**
    * @brief Number of internal variables this model owns beyond
@@ -157,40 +148,12 @@ class ActiveStress {
       double activation_signal) = 0;
 
   /**
-   * @brief Set a scalar parameter value by name
-   *
-   * @param name Parameter name
-   * @param value Parameter value
-   */
-  void set_param(const std::string& name, double value);
-
-  /**
-   * @brief Set a vector-valued parameter value by name
-   *
-   * @param name Parameter name
-   * @param value Parameter value
-   */
-  void set_param_vector(const std::string& name,
-                        const std::vector<double>& value);
-
-  /**
    * @brief Factory: create an active stress model from a type string
    *
    * @param type_str One of: "strain_independent", "strain_dependent"
    * @return Unique pointer to the created active stress model
    */
   static std::unique_ptr<ActiveStress> create(const std::string& type_str);
-
- protected:
-  /**
-   * @brief Map of scalar parameter names to their values
-   */
-  std::map<std::string, double> params_;
-
-  /**
-   * @brief Map of vector-valued parameter names to their values
-   */
-  std::map<std::string, std::vector<double>> params_vec_;
 };
 
 /**
