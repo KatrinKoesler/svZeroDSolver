@@ -2,6 +2,41 @@
 // University of California, and others. SPDX-License-Identifier: BSD-3-Clause
 #include "Parameter.h"
 
+#include <stdexcept>
+#include <string>
+
+namespace {
+// Checks that (xs, ys) form a valid piecewise-linear break point table for
+// linear_interpolate/linear_interpolate_slope. xs is required to be
+// non-decreasing rather than strictly increasing, since a repeated x value
+// at the start/end of the table is a legitimate way to pin a flat clamp
+// region right at that break point (see e.g. the n0_e_c table in
+// StrainDependentActiveStress).
+void validate_breakpoint_table(const std::vector<double>& xs,
+                               const std::vector<double>& ys) {
+  if (xs.size() < 2) {
+    throw std::runtime_error(
+        "linear_interpolate: break point table must have at least 2 "
+        "entries (got " +
+        std::to_string(xs.size()) + ")");
+  }
+  if (xs.size() != ys.size()) {
+    throw std::runtime_error(
+        "linear_interpolate: xs and ys must have the same length (got " +
+        std::to_string(xs.size()) + " and " + std::to_string(ys.size()) +
+        ")");
+  }
+  for (size_t i = 0; i + 1 < xs.size(); i++) {
+    if (xs[i] > xs[i + 1]) {
+      throw std::runtime_error(
+          "linear_interpolate: xs must be monotonically increasing (xs[" +
+          std::to_string(i) + "] = " + std::to_string(xs[i]) + " > xs[" +
+          std::to_string(i + 1) + "] = " + std::to_string(xs[i + 1]) + ")");
+    }
+  }
+}
+}  // namespace
+
 Parameter::Parameter(int id, double value) {
   this->id = id;
   update(value);
@@ -87,6 +122,8 @@ void Parameter::to_unsteady() {
 
 double linear_interpolate(double x, const std::vector<double>& xs,
                           const std::vector<double>& ys) {
+  validate_breakpoint_table(xs, ys);
+
   if (x <= xs.front()) {
     return ys.front();
   }
@@ -106,6 +143,8 @@ double linear_interpolate(double x, const std::vector<double>& xs,
 
 double linear_interpolate_slope(double x, const std::vector<double>& xs,
                                 const std::vector<double>& ys) {
+  validate_breakpoint_table(xs, ys);
+
   if (x <= xs.front() || x >= xs.back()) {
     return 0.0;
   }

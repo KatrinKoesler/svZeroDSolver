@@ -349,6 +349,8 @@ class PiecewiseRateActivation : public ActivationFunction {
                             {"u_values", InputParameter(false, true)}}) {}
 
   double compute(double time) override;
+
+  void finalize() override;
 };
 
 #endif  // SVZERODSOLVER_MODEL_ACTIVATIONFUNCTION_HPP_

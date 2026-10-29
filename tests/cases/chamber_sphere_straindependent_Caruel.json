@@ -97,9 +97,9 @@
       },
       "activation_function": {
         "type": "piecewise_rate",
-        "_comment": "u_t/u_values are the piecewise-linear reaction-rate signal u(t) from Caruel et al. 2013; u_t is normalized to the cardiac cycle length (original break points at 0.1, 0.27, 0.32, 0.34, 0.46, 0.59, 0.6 s of an 0.8 s cardiac cycle)",
-        "u_t": [0.125, 0.3375, 0.4, 0.425, 0.575, 0.7375, 0.75],
-        "u_values": [-3.2, 35, 35, 0, -12, -12, -3.2]
+        "_comment": "u_t/u_values are the piecewise-linear reaction-rate signal u(t) from Caruel et al. 2013; u_t is normalized to the cardiac cycle length (original break points at 0.1, 0.27, 0.32, 0.34, 0.46, 0.59, 0.6 s of an 0.8 s cardiac cycle). Explicit break points are added at u_t=0 and u_t=1 to pin u(t) flat across the whole cycle",
+        "u_t": [0.0, 0.125, 0.3375, 0.4, 0.425, 0.575, 0.7375, 0.75, 1.0],
+        "u_values": [-3.2, -3.2, 35, 35, 0, -12, -12, -3.2, -3.2]
       },
       "material": {
         "type": "exponential",

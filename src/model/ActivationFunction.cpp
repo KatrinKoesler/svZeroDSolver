@@ -265,6 +265,33 @@ double FourierActivation::compute(double time) {
 // strain-dependent active-stress model (Caruel 2013)
 // ============================================================
 
+void PiecewiseRateActivation::finalize() {
+  const auto& u_t = params_vec_.at("u_t");
+
+  // u_t must span the whole normalized cycle [0, 1] so that compute()'s
+  // flat-extrapolation outside the table never silently kicks in; linear_
+  // interpolate's general table checks (size, matching lengths, ordering)
+  // are enforced separately, inside linear_interpolate itself.
+  if (u_t.front() != 0.0) {
+    throw std::runtime_error(
+        "PiecewiseRateActivation: u_t must start at 0 (normalized start of "
+        "the cardiac cycle), got u_t.front() = " +
+        std::to_string(u_t.front()));
+  }
+  if (u_t.back() != 1.0) {
+    throw std::runtime_error(
+        "PiecewiseRateActivation: u_t must end at 1 (normalized end of the "
+        "cardiac cycle), got u_t.back() = " + std::to_string(u_t.back()));
+  }
+  for (double t : u_t) {
+    if (t < 0.0 || t > 1.0) {
+      throw std::runtime_error(
+          "PiecewiseRateActivation: u_t entries must lie in [0, 1] "
+          "(normalized to the cardiac cycle), got " + std::to_string(t));
+    }
+  }
+}
+
 double PiecewiseRateActivation::compute(double time) {
   const double t_in_cycle = std::fmod(time, cardiac_period_);
   const double t_norm = t_in_cycle / cardiac_period_;
