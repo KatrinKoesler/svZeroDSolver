@@ -7,11 +7,9 @@
 
 namespace {
 // Checks that (xs, ys) form a valid piecewise-linear break point table for
-// linear_interpolate/linear_interpolate_slope. xs is required to be
-// non-decreasing rather than strictly increasing, since a repeated x value
-// at the start/end of the table is a legitimate way to pin a flat clamp
-// region right at that break point (see e.g. the n0_e_c table in
-// StrainDependentActiveStress).
+// linear_interpolate/linear_interpolate_slope. xs must be strictly
+// increasing; a near-vertical segment (two xs values an epsilon apart) can
+// be used instead of a literal duplicate to approximate a step change.
 void validate_breakpoint_table(const std::vector<double>& xs,
                                const std::vector<double>& ys) {
   if (xs.size() < 2) {
@@ -27,11 +25,12 @@ void validate_breakpoint_table(const std::vector<double>& xs,
         ")");
   }
   for (size_t i = 0; i + 1 < xs.size(); i++) {
-    if (xs[i] > xs[i + 1]) {
+    if (xs[i] >= xs[i + 1]) {
       throw std::runtime_error(
-          "linear_interpolate: xs must be monotonically increasing (xs[" +
-          std::to_string(i) + "] = " + std::to_string(xs[i]) + " > xs[" +
-          std::to_string(i + 1) + "] = " + std::to_string(xs[i + 1]) + ")");
+          "linear_interpolate: xs must be strictly increasing (xs[" +
+          std::to_string(i) + "] = " + std::to_string(xs[i]) +
+          " is not less than xs[" + std::to_string(i + 1) +
+          "] = " + std::to_string(xs[i + 1]) + ")");
     }
   }
 }

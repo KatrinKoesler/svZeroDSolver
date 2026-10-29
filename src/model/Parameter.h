@@ -126,12 +126,13 @@ struct InputParameter {
  * endpoint of ys (flat extrapolation).
  *
  * @param x Value to evaluate the table at
- * @param xs Break points (at least 2 entries, non-decreasing; a repeated
- * value is allowed, e.g. to pin a flat clamp region at a break point)
+ * @param xs Break points (at least 2 entries, strictly increasing; use a
+ * pair of break points an epsilon apart to approximate a step change
+ * instead of a literal duplicate)
  * @param ys Values at each break point (same size as xs)
  * @return Interpolated (or boundary-clamped) value
  * @throws std::runtime_error if xs has fewer than 2 entries, xs and ys
- * differ in length, or xs is not non-decreasing
+ * differ in length, or xs is not strictly increasing
  */
 double linear_interpolate(double x, const std::vector<double>& xs,
                           const std::vector<double>& ys);
@@ -145,12 +146,13 @@ double linear_interpolate(double x, const std::vector<double>& xs,
  * the slope of the segment to its right is used.
  *
  * @param x Value to evaluate the slope at
- * @param xs Break points (at least 2 entries, non-decreasing; a repeated
- * value is allowed, e.g. to pin a flat clamp region at a break point)
+ * @param xs Break points (at least 2 entries, strictly increasing; use a
+ * pair of break points an epsilon apart to approximate a step change
+ * instead of a literal duplicate)
  * @param ys Values at each break point (same size as xs)
  * @return Local slope of the interpolated table at x
  * @throws std::runtime_error if xs has fewer than 2 entries, xs and ys
- * differ in length, or xs is not non-decreasing
+ * differ in length, or xs is not strictly increasing
  */
 double linear_interpolate_slope(double x, const std::vector<double>& xs,
                                 const std::vector<double>& ys);
