@@ -267,6 +267,7 @@ double FourierActivation::compute(double time) {
 
 double PiecewiseRateActivation::compute(double time) {
   const double t_in_cycle = std::fmod(time, cardiac_period_);
-  return linear_interpolate(t_in_cycle, params_vec_.at("u_t"),
+  const double t_norm = t_in_cycle / cardiac_period_;
+  return linear_interpolate(t_norm, params_vec_.at("u_t"),
                             params_vec_.at("u_values"));
 }

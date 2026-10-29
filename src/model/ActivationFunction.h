@@ -326,8 +326,13 @@ class FourierActivation : public ActivationFunction {
  * Reproduces an activation rate signal \f$u(t)\f$ which is a
  * piecewise-linear function of time within the cardiac cycle, given as a
  * break point table (`u_t`/`u_values`) and evaluated with \ref
- * linear_interpolate. The sign is meaningful for the strain-dependent active 
+ * linear_interpolate. The sign is meaningful for the strain-dependent active
  * stress model (which splits the signal into positive/negative parts).
+ *
+ * `u_t` must be normalized to the cardiac cycle length, i.e.
+ * \f$u_t \in [0, 1]\f$, where 0 is the start of the cycle and 1 is the end.
+ * This way, the break point table does not need to be recomputed if the
+ * cardiac cycle length changes.
  *
  * Parameters: `u_t`, `u_values`
  */
