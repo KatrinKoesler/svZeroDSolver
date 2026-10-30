@@ -225,7 +225,7 @@ class ChamberSphere : public Block {
 
  private:
   double activation_signal_ = 0.0;  // activation_function_->compute(time),
-                                     // cached for use in update_solution
+                                    // cached for use in update_solution
   std::unique_ptr<ActivationFunction> activation_function_;
 
   std::unique_ptr<ActiveStress> active_stress_;

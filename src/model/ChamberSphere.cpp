@@ -9,10 +9,10 @@
 #include "Model.h"
 
 void ChamberSphere::setup_dofs(DOFHandler& dofhandler) {
-  if(!activation_function_) {
-    throw std::runtime_error(
-        "ChamberSphere '" + get_name() +
-        "': activation_function not set. Provide an \"activation_function\" JSON block.");
+  if (!activation_function_) {
+    throw std::runtime_error("ChamberSphere '" + get_name() +
+                             "': activation_function not set. Provide an "
+                             "\"activation_function\" JSON block.");
   }
   if (!active_stress_) {
     throw std::runtime_error(
@@ -24,8 +24,10 @@ void ChamberSphere::setup_dofs(DOFHandler& dofhandler) {
         "ChamberSphere '" + get_name() +
         "': material not set. Provide a \"material\" JSON block.");
   }
-  const ActivationSignalType provided_signal = activation_function_->signal_type();
-  const ActivationSignalType required_signal = active_stress_->required_signal_type();
+  const ActivationSignalType provided_signal =
+      activation_function_->signal_type();
+  const ActivationSignalType required_signal =
+      active_stress_->required_signal_type();
   if (provided_signal != required_signal) {
     throw std::runtime_error(
         "ChamberSphere '" + get_name() + "': active_stress model requires a " +
@@ -34,7 +36,7 @@ void ChamberSphere::setup_dofs(DOFHandler& dofhandler) {
              : "normalized (e.g. half_cosine)") +
         " activation function, but got a " +
         (provided_signal == ActivationSignalType::rate ? "rate-type"
-                                                        : "normalized") +
+                                                       : "normalized") +
         " one.");
   }
 
@@ -142,8 +144,8 @@ void ChamberSphere::update_solution(
       4 * M_PI * pow(radius + radius0, 2);
 
   // active stress
-  active_stress_->update_solution(system, global_eqn_ids, global_var_ids, y,
-                                  dy, radius0, activation_signal_);
+  active_stress_->update_solution(system, global_eqn_ids, global_var_ids, y, dy,
+                                  radius0, activation_signal_);
 }
 
 void ChamberSphere::set_material(std::unique_ptr<SphereMaterial> m) {

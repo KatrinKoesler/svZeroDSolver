@@ -31,8 +31,7 @@ std::unique_ptr<ActiveStress> ActiveStress::create(
 void StrainIndependentActiveStress::update_constant(
     SparseSystem& system, const std::vector<int>& global_eqn_ids,
     const std::vector<int>& global_var_ids) {
-  system.E.coeffRef(global_eqn_ids[NUM_CORE_EQNS], global_var_ids[TAU_VAR]) =
-      1;
+  system.E.coeffRef(global_eqn_ids[NUM_CORE_EQNS], global_var_ids[TAU_VAR]) = 1;
 }
 
 void StrainIndependentActiveStress::update_time(
@@ -79,22 +78,20 @@ void StrainDependentActiveStress::update_constant(
   // active stress
   system.F.coeffRef(global_eqn_ids[TAU_EQN], global_var_ids[TAU_VAR]) = -1;
 
-  // relaxation dynamics 
+  // relaxation dynamics
   system.E.coeffRef(global_eqn_ids[OMEGA_EQN], global_var_ids[OMEGA_VAR]) =
       -alpha_r;
-  system.F.coeffRef(global_eqn_ids[OMEGA_EQN], global_var_ids[OMEGA_VAR]) =
-      -1;
+  system.F.coeffRef(global_eqn_ids[OMEGA_EQN], global_var_ids[OMEGA_VAR]) = -1;
 
-  // sarcomere strain 
+  // sarcomere strain
   system.E.coeffRef(global_eqn_ids[E_C_EQN], global_var_ids[E_C_VAR]) = -mu;
   system.F.coeffRef(global_eqn_ids[E_C_EQN], global_var_ids[TAU_C_VAR]) = -1;
 
-  // sarcomere stiffness 
+  // sarcomere stiffness
   system.E.coeffRef(global_eqn_ids[K_C_EQN], global_var_ids[K_C_VAR]) = -1;
 
-  // sarcomere active stress 
-  system.E.coeffRef(global_eqn_ids[TAU_C_EQN], global_var_ids[TAU_C_VAR]) =
-      -1;
+  // sarcomere active stress
+  system.E.coeffRef(global_eqn_ids[TAU_C_EQN], global_var_ids[TAU_C_VAR]) = -1;
 }
 
 void StrainDependentActiveStress::update_time(
@@ -152,15 +149,14 @@ void StrainDependentActiveStress::update_solution(
 
   // active stress
   system.C.coeffRef(global_eqn_ids[TAU_EQN]) =
-      E_s *
-      (-e_c * pow(radius0, 2) + 0.5 * pow(radius, 2) + radius * radius0) /
+      E_s * (-e_c * pow(radius0, 2) + 0.5 * pow(radius, 2) + radius * radius0) /
       (pow(radius0, 2) * pow(2 * e_c + 1, 2));
   system.dC_dy.coeffRef(global_eqn_ids[TAU_EQN], global_var_ids[RADIUS_VAR]) =
       E_s * (1.0 * radius + radius0) / (pow(radius0, 2) * pow(2 * e_c + 1, 2));
   system.dC_dy.coeffRef(global_eqn_ids[TAU_EQN], global_var_ids[E_C_VAR]) =
       E_s *
-      (4 * e_c * pow(radius0, 2) - 2.0 * pow(radius, 2) -
-       4 * radius * radius0 - pow(radius0, 2) * (2 * e_c + 1)) /
+      (4 * e_c * pow(radius0, 2) - 2.0 * pow(radius, 2) - 4 * radius * radius0 -
+       pow(radius0, 2) * (2 * e_c + 1)) /
       (pow(radius0, 2) * pow(2 * e_c + 1, 3));
 
   // relaxation dynamics
@@ -176,15 +172,14 @@ void StrainDependentActiveStress::update_solution(
   system.dC_dy.coeffRef(global_eqn_ids[E_C_EQN], global_var_ids[RADIUS_VAR]) =
       E_s *
       (2 * (radius + radius0) *
-           (-e_c * pow(radius0, 2) + 0.5 * pow(radius, 2) +
-            radius * radius0) +
+           (-e_c * pow(radius0, 2) + 0.5 * pow(radius, 2) + radius * radius0) +
        (1.0 * radius + radius0) *
            (pow(radius, 2) + 2 * radius * radius0 + pow(radius0, 2))) /
       (pow(radius0, 4) * pow(2 * e_c + 1, 3));
   system.dC_dy.coeffRef(global_eqn_ids[E_C_EQN], global_var_ids[E_C_VAR]) =
       E_s * (pow(radius, 2) + 2 * radius * radius0 + pow(radius0, 2)) *
-      (6 * e_c * pow(radius0, 2) - 3.0 * pow(radius, 2) -
-       6 * radius * radius0 - pow(radius0, 2) * (2 * e_c + 1)) /
+      (6 * e_c * pow(radius0, 2) - 3.0 * pow(radius, 2) - 6 * radius * radius0 -
+       pow(radius0, 2) * (2 * e_c + 1)) /
       (pow(radius0, 4) * pow(2 * e_c + 1, 4));
 
   // sarcomere stiffness
@@ -204,8 +199,7 @@ void StrainDependentActiveStress::update_solution(
   system.C.coeffRef(global_eqn_ids[TAU_C_EQN]) =
       de_c_dt * k_c + n_0_ * sigma_0 * u_plus_ -
       tau_c * (alpha * fabs(de_c_dt) + omega * fabs(u_minus_));
-  system.dC_dydot.coeffRef(global_eqn_ids[TAU_C_EQN],
-                           global_var_ids[E_C_VAR]) =
+  system.dC_dydot.coeffRef(global_eqn_ids[TAU_C_EQN], global_var_ids[E_C_VAR]) =
       ((de_c_dt == 0) ? (k_c)
                       : (-alpha * de_c_dt * tau_c / fabs(de_c_dt) + k_c));
   system.dC_dy.coeffRef(global_eqn_ids[TAU_C_EQN], global_var_ids[E_C_VAR]) =

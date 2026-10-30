@@ -62,8 +62,9 @@ class ActivationFunction : public ParameterHolder {
    * @brief Type of signal this activation function's compute() produces
    *
    * @return \ref ActivationSignalType::normalized for all activation
-   * functions with function values between [0;1] and \ref ActivationSignalType::rate 
-   * for \ref PiecewiseRateActivation, which returns a signed reaction-rate signal.
+   * functions with function values between [0;1] and \ref
+   * ActivationSignalType::rate for \ref PiecewiseRateActivation, which returns
+   * a signed reaction-rate signal.
    */
   virtual ActivationSignalType signal_type() const {
     return ActivationSignalType::normalized;

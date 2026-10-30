@@ -68,8 +68,9 @@ void read_component_params(const nlohmann::json& j, ParameterHolder& comp,
   for (auto& el : j.items()) {
     if (el.key()[0] == '_' || el.key() == "type") continue;
     if (!has_parameter(props, el.key())) {
-      throw std::runtime_error("Unknown parameter " + el.key() + " defined in " +
-                               component_label + " for chamber " + chamber_name);
+      throw std::runtime_error("Unknown parameter " + el.key() +
+                               " defined in " + component_label +
+                               " for chamber " + chamber_name);
     }
   }
 
@@ -791,8 +792,8 @@ void create_chambers(
       auto mat = generate_material(chamber_config["material"], chamber_name);
       model.get_block(chamber_name)->set_material(std::move(mat));
 
-      auto act_stress = generate_active_stress(
-          chamber_config["active_stress"], chamber_name);
+      auto act_stress =
+          generate_active_stress(chamber_config["active_stress"], chamber_name);
       model.get_block(chamber_name)->set_active_stress(std::move(act_stress));
     }
 

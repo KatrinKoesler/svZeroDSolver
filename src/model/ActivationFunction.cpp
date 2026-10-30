@@ -265,13 +265,15 @@ void PiecewiseRateActivation::finalize() {
   if (u_t.back() != 1.0) {
     throw std::runtime_error(
         "PiecewiseRateActivation: u_t must end at 1 (normalized end of the "
-        "cardiac cycle), got u_t.back() = " + std::to_string(u_t.back()));
+        "cardiac cycle), got u_t.back() = " +
+        std::to_string(u_t.back()));
   }
   for (double t : u_t) {
     if (t < 0.0 || t > 1.0) {
       throw std::runtime_error(
           "PiecewiseRateActivation: u_t entries must lie in [0, 1] "
-          "(normalized to the cardiac cycle), got " + std::to_string(t));
+          "(normalized to the cardiac cycle), got " +
+          std::to_string(t));
     }
   }
 }

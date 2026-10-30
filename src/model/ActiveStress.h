@@ -46,20 +46,30 @@ class ActiveStress : public ParameterHolder {
    * Block::global_eqn_ids arrays that ChamberSphere passes down unchanged.
    */
   ///@{
-  static constexpr int RADIUS_VAR = 4;  ///< Radius position within ChamberSphere's own global_var_ids array
-  static constexpr int VELO_VAR = 5;    ///< Radial velocity position within ChamberSphere's own global_var_ids array
-                                        ///< 
-  static constexpr int STRESS_VAR = 6;  ///< Total wall stress position within ChamberSphere's own global_var_ids array
-                                        ///< 
-  static constexpr int TAU_VAR = 7;     ///< Active stress \f$\tau\f$ position within ChamberSphere's own global_var_ids array
-                                        ///< 
-  static constexpr int VOLUME_VAR = 8;  ///< Volume position within ChamberSphere's own global_var_ids array
-  static constexpr int NUM_CORE_VARS = 9;  ///< A subclass's own extra
-                                            ///< variables start at
-                                            ///< global_var_ids[NUM_CORE_VARS + i]
-  static constexpr int NUM_CORE_EQNS = 6;  ///< A subclass's own extra
-                                            ///< equations start at
-                                            ///< global_eqn_ids[NUM_CORE_EQNS + i]
+  static constexpr int RADIUS_VAR =
+      4;  ///< Radius position within ChamberSphere's own global_var_ids array
+  static constexpr int VELO_VAR =
+      5;  ///< Radial velocity position within ChamberSphere's own
+          ///< global_var_ids array
+          ///<
+  static constexpr int STRESS_VAR =
+      6;  ///< Total wall stress position within ChamberSphere's own
+          ///< global_var_ids array
+          ///<
+  static constexpr int TAU_VAR =
+      7;  ///< Active stress \f$\tau\f$ position within ChamberSphere's own
+          ///< global_var_ids array
+          ///<
+  static constexpr int VOLUME_VAR =
+      8;  ///< Volume position within ChamberSphere's own global_var_ids array
+  static constexpr int NUM_CORE_VARS =
+      9;  ///< A subclass's own extra
+          ///< variables start at
+          ///< global_var_ids[NUM_CORE_VARS + i]
+  static constexpr int NUM_CORE_EQNS =
+      6;  ///< A subclass's own extra
+          ///< equations start at
+          ///< global_eqn_ids[NUM_CORE_EQNS + i]
   ///@}
 
   /**
@@ -197,8 +207,7 @@ class StrainIndependentActiveStress : public ActiveStress {
                        const std::vector<int>& global_eqn_ids,
                        const std::vector<int>& global_var_ids) override;
 
-  void update_time(SparseSystem& system,
-                   const std::vector<int>& global_eqn_ids,
+  void update_time(SparseSystem& system, const std::vector<int>& global_eqn_ids,
                    const std::vector<int>& global_var_ids,
                    double activation_signal) override;
 
@@ -235,8 +244,8 @@ class StrainIndependentActiveStress : public ActiveStress {
  * \dot{k}_c = -(|u|_+ + \omega |u|_- + \alpha |\dot{e}_c|) k_c + n_0 k_0 |u|_+
  * \f]
  * \f[
- * \dot{\tau}_c = -(|u|_+ + \omega |u|_- + \alpha |\dot{e}_c|) \tau_c + n_0 \sigma_0
- * |u|_+ + k_c \dot{e}_c
+ * \dot{\tau}_c = -(|u|_+ + \omega |u|_- + \alpha |\dot{e}_c|) \tau_c + n_0
+ * \sigma_0 |u|_+ + k_c \dot{e}_c
  * \f]
  * where \f$n_0\f$ (activation strain-dependence) and \f$m_0\f$ (relaxation
  * strain-dependence) are piecewise-linear functions of \f$e_c\f$, given as
@@ -276,8 +285,7 @@ class StrainDependentActiveStress : public ActiveStress {
                        const std::vector<int>& global_eqn_ids,
                        const std::vector<int>& global_var_ids) override;
 
-  void update_time(SparseSystem& system,
-                   const std::vector<int>& global_eqn_ids,
+  void update_time(SparseSystem& system, const std::vector<int>& global_eqn_ids,
                    const std::vector<int>& global_var_ids,
                    double activation_signal) override;
 
@@ -290,7 +298,8 @@ class StrainDependentActiveStress : public ActiveStress {
 
  private:
   /**
-   * @name Extra variable/equation positions within the full ChamberSphere global_var_ids/global_eqn_ids arrays
+   * @name Extra variable/equation positions within the full ChamberSphere
+   * global_var_ids/global_eqn_ids arrays
    *
    * Reproduce the exact global_var_ids/global_eqn_ids indices that the
    * ChamberSphere used.
@@ -315,12 +324,12 @@ class StrainDependentActiveStress : public ActiveStress {
    */
   void update_active_stress_values(double e_c);
 
-  double n_0_ = 0.0;         // activation strain-dependence
-  double m_0_ = 0.0;         // relaxation strain-dependence
-  double dn_0_de_c_ = 0.0;   // d(n_0)/d(e_c), local slope of n0_e_c/n0_values
-  double dm_0_de_c_ = 0.0;   // d(m_0)/d(e_c), local slope of m0_e_c/m0_values
-  double u_plus_ = 0.0;      // positive part of the reaction-rate signal
-  double u_minus_ = 0.0;     // negative part of the reaction-rate signal
+  double n_0_ = 0.0;        // activation strain-dependence
+  double m_0_ = 0.0;        // relaxation strain-dependence
+  double dn_0_de_c_ = 0.0;  // d(n_0)/d(e_c), local slope of n0_e_c/n0_values
+  double dm_0_de_c_ = 0.0;  // d(m_0)/d(e_c), local slope of m0_e_c/m0_values
+  double u_plus_ = 0.0;     // positive part of the reaction-rate signal
+  double u_minus_ = 0.0;    // negative part of the reaction-rate signal
 };
 
 #endif  // SVZERODSOLVER_MODEL_ACTIVESTRESS_HPP_

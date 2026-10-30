@@ -21,8 +21,7 @@ void validate_breakpoint_table(const std::vector<double>& xs,
   if (xs.size() != ys.size()) {
     throw std::runtime_error(
         "linear_interpolate: xs and ys must have the same length (got " +
-        std::to_string(xs.size()) + " and " + std::to_string(ys.size()) +
-        ")");
+        std::to_string(xs.size()) + " and " + std::to_string(ys.size()) + ")");
   }
   for (size_t i = 0; i + 1 < xs.size(); i++) {
     if (xs[i] >= xs[i + 1]) {
