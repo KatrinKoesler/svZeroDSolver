@@ -8,15 +8,16 @@
 #define SVZERODSOLVER_MODEL_ChamberSphere_HPP_
 
 #include <math.h>
-#include <map>              
-#include <memory>           
-#include <string> 
+
+#include <map>
+#include <memory>
+#include <string>
 
 #include "ActivationFunction.h"
 #include "ActiveStress.h"
 #include "Block.h"
-#include "SphereMaterial.h"
 #include "SparseSystem.h"
+#include "SphereMaterial.h"
 
 /**
  * @brief Spherical heart chamber model

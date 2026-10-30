@@ -78,11 +78,9 @@ class SphereMaterial : public ParameterHolder {
 class MooneyRivlinMaterial : public SphereMaterial {
  public:
   MooneyRivlinMaterial()
-      : SphereMaterial({{"W1", InputParameter()},
-                        {"W2", InputParameter()}}) {}
+      : SphereMaterial({{"W1", InputParameter()}, {"W2", InputParameter()}}) {}
 
-  SphericalStressResult compute(double radius,
-                                double radius0) const override;
+  SphericalStressResult compute(double radius, double radius0) const override;
 };
 
 /**
@@ -104,8 +102,7 @@ class ExponentialMaterial : public SphereMaterial {
                         {"C2", InputParameter()},
                         {"C3", InputParameter()}}) {}
 
-  SphericalStressResult compute(double radius,
-                                double radius0) const override;
+  SphericalStressResult compute(double radius, double radius0) const override;
 };
 
 #endif  // SVZERODSOLVER_MODEL_SPHEREMATERIAL_HPP_
