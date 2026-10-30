@@ -27,7 +27,7 @@
     "number_of_time_pts_per_cardiac_cycle": 5000,
     "steady_initial": false,
     "output_variable_based": true,
-    "absolute_tolerance": 1e-9,
+    "absolute_tolerance": 1e-8,
     "output_all_cycles": false,
     "max_iter_error_to_warning": true
   },
