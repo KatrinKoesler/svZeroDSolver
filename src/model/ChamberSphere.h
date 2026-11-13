@@ -48,11 +48,23 @@
  *
  * 2. Spherical stress:
  * \f[
- * -S + \tau + S_\text{el}(r, r_0) + \eta \dot{C}
+ * -S + \tau + \lambda_p^2 S_\text{el}(\lambda_p \sqrt{C}) + \eta \dot{C}
  * (1 + 2 C^{-6}) = 0
  * \f]
  * where \f$S_\text{el}\f$ is the elastic stress term supplied by the
- * chamber's \ref SphereMaterial.
+ * chamber's \ref SphereMaterial as a function of the stretch.
+ *
+ * The reference radius \f$r_0\f$ may be a loaded (e.g. imaged)
+ * configuration. The wall is then prestretched by \f$\lambda_p\f$ relative
+ * to its unloaded radius \f$r_0 / \lambda_p\f$, and the material is evaluated
+ * at the total stretch \f$\lambda_p \sqrt{C}\f$. The factor \f$\lambda_p^2\f$
+ * converts the stress from the unloaded to the reference configuration. The
+ * prestretch is chosen such that the reference configuration is in
+ * equilibrium under the reference pressure \f$P_0\f$ without active stress:
+ * \f[
+ * \lambda_p^2 S_\text{el}(\lambda_p) = P_0 \frac{r_0}{d_0}
+ * \f]
+ * For \f$P_0 = 0\f$, \f$\lambda_p = 1\f$ and \f$r_0\f$ is stress-free.
  *
  * 3. Volume change:
  * \f[
@@ -100,6 +112,8 @@
  * * `thick0` - Wall thickness \f$d_0\f$
  * * `radius0` - Reference radius \f$r_0\f$
  * * `eta` - Viscosity parameter \f$\eta\f$
+ * * `reference_pressure` - Pressure \f$P_0\f$ at which the reference radius
+ * \f$r_0\f$ is in equilibrium (optional, default 0)
  *
  * An `activation_function` object is also required alongside
  * `zero_d_element_values` to select and parameterize the activation function
@@ -125,7 +139,8 @@
  *                "rho" : 1e3,
  *                "thick0" : 0.01,
  *                "radius0" : 0.05,
- *                "eta" : 10.0
+ *                "eta" : 10.0,
+ *                "reference_pressure" : 0.0
  *            },
  *            "activation_function": {},
  *            "material": {},
@@ -166,6 +181,7 @@ class ChamberSphere : public Block {
     thick0 = 1,
     radius0 = 2,
     eta = 3,
+    reference_pressure = 4,
   };
 
   /**
@@ -179,7 +195,8 @@ class ChamberSphere : public Block {
               {{"rho", InputParameter()},
                {"thick0", InputParameter()},
                {"radius0", InputParameter()},
-               {"eta", InputParameter()}}) {}
+               {"eta", InputParameter()},
+               {"reference_pressure", InputParameter(true)}}) {}
 
   /**
    * @brief Set up the degrees of freedom (DOF) of the block
@@ -234,6 +251,20 @@ class ChamberSphere : public Block {
   void set_material(std::unique_ptr<SphereMaterial> m) override;
 
  private:
+  /**
+   * @brief Solve for the prestretch that puts the reference configuration in
+   * equilibrium under the reference pressure
+   *
+   * @param reference_pressure Reference pressure \f$P_0\f$
+   * @param radius0 Reference radius \f$r_0\f$
+   * @param thick0 Wall thickness \f$d_0\f$
+   * @return Prestretch \f$\lambda_p\f$
+   */
+  double compute_prestretch(double reference_pressure, double radius0,
+                            double thick0) const;
+
+  double prestretch_ = 1.0;  // computed in update_constant
+
   double activation_signal_ = 0.0;  // activation_function_->compute(time),
                                     // cached for use in update_solution
   std::unique_ptr<ActivationFunction> activation_function_;

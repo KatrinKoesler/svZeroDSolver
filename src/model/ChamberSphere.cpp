@@ -56,6 +56,11 @@ void ChamberSphere::update_constant(SparseSystem& system,
                                     std::vector<double>& parameters) {
   const double rho = parameters[global_param_ids[ParamId::rho]];
   const double thick0 = parameters[global_param_ids[ParamId::thick0]];
+  const double radius0 = parameters[global_param_ids[ParamId::radius0]];
+  const double reference_pressure =
+      parameters[global_param_ids[ParamId::reference_pressure]];
+
+  prestretch_ = compute_prestretch(reference_pressure, radius0, thick0);
 
   // balance of linear momentum
   system.E.coeffRef(global_eqn_ids[0], global_var_ids[5]) = rho * thick0;
@@ -121,8 +126,13 @@ void ChamberSphere::update_solution(
   system.dC_dy.coeffRef(global_eqn_ids[0], global_var_ids[6]) =
       thick0 * (radius + radius0) / pow(radius0, 2);
 
-  // spherical stress: material-dependent elastic term plus viscous damping
-  const auto mat = material_->compute(radius, radius0);
+  // spherical stress: material-dependent elastic term plus viscous damping.
+  // The elastic term is evaluated relative to the unloaded radius and scaled
+  // by prestretch^2 to convert it to the reference configuration.
+  const double radius_unloaded = radius0 / prestretch_;
+  const double prestretch_sq = pow(prestretch_, 2);
+  const auto mat =
+      material_->compute(radius + radius0 - radius_unloaded, radius_unloaded);
 
   const double C_val_visc = 2 * dradius_dt * eta *
                             (2 * pow(radius0, 12) + pow(radius + radius0, 12)) /
@@ -134,9 +144,9 @@ void ChamberSphere::update_solution(
       2 * eta * (2 * pow(radius0, 12) + pow(radius + radius0, 12)) /
       (pow(radius0, 2) * pow(radius + radius0, 11));
 
-  system.C.coeffRef(global_eqn_ids[1]) = mat.C_val + C_val_visc;
+  system.C.coeffRef(global_eqn_ids[1]) = prestretch_sq * mat.C_val + C_val_visc;
   system.dC_dy.coeffRef(global_eqn_ids[1], global_var_ids[4]) =
-      mat.dC_dy_radius + dC_dy_visc;
+      prestretch_sq * mat.dC_dy_radius + dC_dy_visc;
   system.dC_dydot.coeffRef(global_eqn_ids[1], global_var_ids[4]) =
       dC_dydot_visc;
 
@@ -151,6 +161,83 @@ void ChamberSphere::update_solution(
   // active stress
   active_stress_->update_solution(system, global_eqn_ids, global_var_ids, y, dy,
                                   radius0, activation_signal_);
+}
+
+double ChamberSphere::compute_prestretch(double reference_pressure,
+                                         double radius0, double thick0) const {
+  // Target stress: equilibrium of the reference configuration (r = 0,
+  // v = 0, tau = 0) in the balance of linear momentum. Without a reference
+  // pressure the reference configuration is stress-free
+  const double target_stress = reference_pressure * radius0 / thick0;
+  if (target_stress == 0.0) {
+    return 1.0;
+  }
+
+  // Solve f(lambda) = lambda^2 S_el(lambda) - target_stress = 0. S_el depends
+  // only on the stretch (radius + radius0) / radius0, so it is evaluated with
+  // a unit reference radius
+  auto residual = [&](double lambda, double& dres) {
+    const auto mat = material_->compute(lambda - 1.0, 1.0);
+    dres = 2 * lambda * mat.C_val + pow(lambda, 2) * mat.dC_dy_radius;
+    return pow(lambda, 2) * mat.C_val - target_stress;
+  };
+  const std::string error_msg = "ChamberSphere '" + get_name() +
+                                "': could not find a prestretch that "
+                                "balances reference_pressure = " +
+                                std::to_string(reference_pressure) + ".";
+  const int max_iter = 100;
+  const double tol = 1e-12;
+  double dres;
+
+  // Bracket the root: f(1) = -target_stress, so step away from lambda = 1
+  // towards the target until f changes sign (stays at lambda > 0)
+  double lambda_lo = 1.0;
+  double lambda_hi = 1.0;
+  double width = 0.1;
+  for (int i = 0;; i++) {
+    if (i == max_iter) {
+      throw std::runtime_error(error_msg);
+    }
+    if (target_stress > 0.0) {
+      lambda_hi = 1.0 + width;
+      if (residual(lambda_hi, dres) > 0.0) break;
+      lambda_lo = lambda_hi;
+    } else {
+      lambda_lo = 1.0 / (1.0 + width);
+      if (residual(lambda_lo, dres) < 0.0) break;
+      lambda_hi = lambda_lo;
+    }
+    width *= 2.0;
+  }
+
+  // Newton update, falling back to bisection if the step leaves the bracket
+  // (e.g. overshoot in the exponential material, or zero slope if C2 or
+  // C3 = 0)
+  double lambda = 1.0;
+  for (int i = 0; i < max_iter; i++) {
+    const double res = residual(lambda, dres);
+    if (std::abs(res) <= tol * std::abs(target_stress) ||
+        lambda_hi - lambda_lo <= tol * lambda) {
+      return lambda;
+    }
+
+    // Shrink the bracket so that f still changes sign within it
+    if (res < 0.0) {
+      lambda_lo = lambda;
+    } else {
+      lambda_hi = lambda;
+    }
+
+    double lambda_new = lambda - res / dres;
+    if (!(dres > 0.0) || !(lambda_new > lambda_lo && lambda_new < lambda_hi)) {
+      lambda_new = 0.5 * (lambda_lo + lambda_hi);
+    }
+    lambda = lambda_new;
+  }
+
+  // Throw error if prestretch cannot be found within the maximum number of
+  // iterations
+  throw std::runtime_error(error_msg);
 }
 
 void ChamberSphere::set_material(std::unique_ptr<SphereMaterial> m) {
