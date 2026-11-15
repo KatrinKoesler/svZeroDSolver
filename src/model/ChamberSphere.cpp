@@ -212,8 +212,8 @@ double ChamberSphere::compute_prestretch(double reference_pressure,
 
   // Newton update, falling back to bisection if the step leaves the bracket
   // (e.g. overshoot in the exponential material, or zero slope if C2 or
-  // C3 = 0)
-  double lambda = 1.0;
+  // C3 = 0). Start inside the bracket
+  double lambda = 0.5 * (lambda_lo + lambda_hi);
   for (int i = 0; i < max_iter; i++) {
     const double res = residual(lambda, dres);
     if (std::abs(res) <= tol * std::abs(target_stress) ||
