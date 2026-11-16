@@ -62,8 +62,9 @@ void ChamberSphere::update_constant(SparseSystem& system,
 
   prestretch_ = compute_prestretch(reference_pressure, radius0, thick0);
 
-  // balance of linear momentum
-  system.E.coeffRef(global_eqn_ids[0], global_var_ids[5]) = rho * thick0;
+  // balance of linear momentum (wall thickness of the unloaded configuration)
+  system.E.coeffRef(global_eqn_ids[0], global_var_ids[5]) =
+      rho * pow(prestretch_, 2) * thick0;
 
   // spherical stress
   system.F.coeffRef(global_eqn_ids[1], global_var_ids[6]) = -1;
@@ -105,15 +106,24 @@ void ChamberSphere::update_solution(
     SparseSystem& system, std::vector<double>& parameters,
     const Eigen::Matrix<double, Eigen::Dynamic, 1>& y,
     const Eigen::Matrix<double, Eigen::Dynamic, 1>& dy) {
-  const double thick0 = parameters[global_param_ids[ParamId::thick0]];
-  const double radius0 = parameters[global_param_ids[ParamId::radius0]];
+  const double radius0_loaded =
+      parameters[global_param_ids[ParamId::radius0]];
   const double eta = parameters[global_param_ids[ParamId::eta]];
+
+  // All equations are evaluated relative to the stress-free (unloaded)
+  // configuration: radius0 / prestretch and prestretch^2 * thick0
+  // (incompressible wall). The radius displacement relative to it differs from
+  // the solution variable (displacement relative to the input radius0) only by
+  // a constant, so derivatives w.r.t. the solution variable are unchanged.
+  const double radius0 = radius0_loaded / prestretch_;
+  const double thick0 =
+      pow(prestretch_, 2) * parameters[global_param_ids[ParamId::thick0]];
 
   const double velo = y[global_var_ids[5]];
   const double Pout = y[global_var_ids[2]];
   const double stress = y[global_var_ids[6]];
   const double dradius_dt = dy[global_var_ids[4]];
-  const double radius = y[global_var_ids[4]];
+  const double radius = y[global_var_ids[4]] + radius0_loaded - radius0;
 
   // balance of momentum
   system.C.coeffRef(global_eqn_ids[0]) =
@@ -126,13 +136,8 @@ void ChamberSphere::update_solution(
   system.dC_dy.coeffRef(global_eqn_ids[0], global_var_ids[6]) =
       thick0 * (radius + radius0) / pow(radius0, 2);
 
-  // spherical stress: material-dependent elastic term plus viscous damping.
-  // The elastic term is evaluated relative to the unloaded radius and scaled
-  // by prestretch^2 to convert it to the reference configuration.
-  const double radius_unloaded = radius0 / prestretch_;
-  const double prestretch_sq = pow(prestretch_, 2);
-  const auto mat =
-      material_->compute(radius + radius0 - radius_unloaded, radius_unloaded);
+  // spherical stress: material-dependent elastic term plus viscous damping
+  const auto mat = material_->compute(radius, radius0);
 
   const double C_val_visc = 2 * dradius_dt * eta *
                             (2 * pow(radius0, 12) + pow(radius + radius0, 12)) /
@@ -144,9 +149,9 @@ void ChamberSphere::update_solution(
       2 * eta * (2 * pow(radius0, 12) + pow(radius + radius0, 12)) /
       (pow(radius0, 2) * pow(radius + radius0, 11));
 
-  system.C.coeffRef(global_eqn_ids[1]) = prestretch_sq * mat.C_val + C_val_visc;
+  system.C.coeffRef(global_eqn_ids[1]) = mat.C_val + C_val_visc;
   system.dC_dy.coeffRef(global_eqn_ids[1], global_var_ids[4]) =
-      prestretch_sq * mat.dC_dy_radius + dC_dy_visc;
+      mat.dC_dy_radius + dC_dy_visc;
   system.dC_dydot.coeffRef(global_eqn_ids[1], global_var_ids[4]) =
       dC_dydot_visc;
 
@@ -160,7 +165,7 @@ void ChamberSphere::update_solution(
 
   // active stress
   active_stress_->update_solution(system, global_eqn_ids, global_var_ids, y, dy,
-                                  radius0, activation_signal_);
+                                  radius, radius0, activation_signal_);
 }
 
 double ChamberSphere::compute_prestretch(double reference_pressure,

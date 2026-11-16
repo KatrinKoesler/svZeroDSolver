@@ -153,7 +153,8 @@ class ActiveStress : public ParameterHolder {
    * @param global_var_ids ChamberSphere's global variable indices
    * @param y Current solution
    * @param dy Current derivative of the solution
-   * @param radius0 Reference radius \f$r_0\f$ of the chamber
+   * @param radius Radius displacement relative to radius0
+   * @param radius0 Stress-free (unloaded) radius of the chamber
    * @param activation_signal The chamber's ActivationFunction evaluated at
    * the current time
    */
@@ -161,8 +162,8 @@ class ActiveStress : public ParameterHolder {
       SparseSystem& system, const std::vector<int>& global_eqn_ids,
       const std::vector<int>& global_var_ids,
       const Eigen::Matrix<double, Eigen::Dynamic, 1>& y,
-      const Eigen::Matrix<double, Eigen::Dynamic, 1>& dy, double radius0,
-      double activation_signal) = 0;
+      const Eigen::Matrix<double, Eigen::Dynamic, 1>& dy, double radius,
+      double radius0, double activation_signal) = 0;
 
   /**
    * @brief Type of activation signal this active stress model needs
@@ -222,7 +223,8 @@ class StrainIndependentActiveStress : public ActiveStress {
                        const std::vector<int>& global_var_ids,
                        const Eigen::Matrix<double, Eigen::Dynamic, 1>& y,
                        const Eigen::Matrix<double, Eigen::Dynamic, 1>& dy,
-                       double radius0, double activation_signal) override;
+                       double radius, double radius0,
+                       double activation_signal) override;
 
  private:
   double act_ = 0.0;       ///< Rate coefficient
@@ -307,7 +309,8 @@ class StrainDependentActiveStress : public ActiveStress {
                        const std::vector<int>& global_var_ids,
                        const Eigen::Matrix<double, Eigen::Dynamic, 1>& y,
                        const Eigen::Matrix<double, Eigen::Dynamic, 1>& dy,
-                       double radius0, double activation_signal) override;
+                       double radius, double radius0,
+                       double activation_signal) override;
 
  private:
   /**

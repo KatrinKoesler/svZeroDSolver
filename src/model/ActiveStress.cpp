@@ -53,11 +53,12 @@ void StrainIndependentActiveStress::update_solution(
     SparseSystem& system, const std::vector<int>& global_eqn_ids,
     const std::vector<int>& global_var_ids,
     const Eigen::Matrix<double, Eigen::Dynamic, 1>& y,
-    const Eigen::Matrix<double, Eigen::Dynamic, 1>& dy, double radius0,
-    double activation_signal) {
+    const Eigen::Matrix<double, Eigen::Dynamic, 1>& dy, double radius,
+    double radius0, double activation_signal) {
   (void)global_var_ids;
   (void)y;
   (void)dy;
+  (void)radius;
   (void)radius0;
   (void)activation_signal;
 
@@ -145,11 +146,12 @@ void StrainDependentActiveStress::update_solution(
     SparseSystem& system, const std::vector<int>& global_eqn_ids,
     const std::vector<int>& global_var_ids,
     const Eigen::Matrix<double, Eigen::Dynamic, 1>& y,
-    const Eigen::Matrix<double, Eigen::Dynamic, 1>& dy, double radius0,
-    double activation_signal) {
+    const Eigen::Matrix<double, Eigen::Dynamic, 1>& dy, double radius,
+    double radius0, double activation_signal) {
   (void)activation_signal;  // u_plus_/u_minus_ are computed in update_time()
 
-  const double radius = y[global_var_ids[RADIUS_VAR]];
+  // radius differs from y[global_var_ids[RADIUS_VAR]] only by a constant
+  // offset, so the derivatives w.r.t. RADIUS_VAR below are unaffected
   const double e_c = y[global_var_ids[E_C_VAR]];
   const double tau_c = y[global_var_ids[TAU_C_VAR]];
   const double k_c = y[global_var_ids[K_C_VAR]];

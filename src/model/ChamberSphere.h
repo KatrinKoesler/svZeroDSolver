@@ -48,23 +48,27 @@
  *
  * 2. Spherical stress:
  * \f[
- * -S + \tau + \lambda_p^2 S_\text{el}(\lambda_p \sqrt{C}) + \eta \dot{C}
+ * -S + \tau + S_\text{el}(r, r_0) + \eta \dot{C}
  * (1 + 2 C^{-6}) = 0
  * \f]
  * where \f$S_\text{el}\f$ is the elastic stress term supplied by the
- * chamber's \ref SphereMaterial as a function of the stretch.
+ * chamber's \ref SphereMaterial.
  *
- * The reference radius \f$r_0\f$ may be a loaded (e.g. imaged)
- * configuration. The wall is then prestretched by \f$\lambda_p\f$ relative
- * to its unloaded radius \f$r_0 / \lambda_p\f$, and the material is evaluated
- * at the total stretch \f$\lambda_p \sqrt{C}\f$. The factor \f$\lambda_p^2\f$
- * converts the stress from the unloaded to the reference configuration. The
- * prestretch is chosen such that the reference configuration is in
- * equilibrium under the reference pressure \f$P_0\f$ without active stress:
+ * In these equations, \f$r_0\f$ and \f$d_0\f$ denote the stress-free
+ * (unloaded) configuration and \f$r\f$ the radius displacement relative to
+ * it. If a reference pressure \f$P_0\f$ is given, the input `radius0` and
+ * `thick0` are instead a loaded (e.g. imaged) configuration in equilibrium
+ * under \f$P_0\f$ without active stress. The wall is then prestretched by
+ * \f$\lambda_p\f$, and the unloaded configuration is
+ * \f$r_0 = \texttt{radius0} / \lambda_p\f$ and
+ * \f$d_0 = \lambda_p^2 \, \texttt{thick0}\f$ (incompressible wall), with
+ * \f$\lambda_p\f$ the solution of
  * \f[
- * \lambda_p^2 S_\text{el}(\lambda_p) = P_0 \frac{r_0}{d_0}
+ * \lambda_p^2 S_\text{el}(\lambda_p) = P_0 \frac{\texttt{radius0}}{\texttt{thick0}}
  * \f]
- * For \f$P_0 = 0\f$, \f$\lambda_p = 1\f$ and \f$r_0\f$ is stress-free.
+ * All stress quantities (elastic, viscous, active) are thus evaluated
+ * relative to the unloaded configuration. For \f$P_0 = 0\f$,
+ * \f$\lambda_p = 1\f$ and `radius0` is stress-free.
  *
  * 3. Volume change:
  * \f[
@@ -109,11 +113,11 @@
  * Parameter sequence for constructing this block:
  *
  * * `rho` - Density \f$\rho\f$
- * * `thick0` - Wall thickness \f$d_0\f$
- * * `radius0` - Reference radius \f$r_0\f$
+ * * `thick0` - Wall thickness at `radius0`
+ * * `radius0` - Reference radius
  * * `eta` - Viscosity parameter \f$\eta\f$
- * * `reference_pressure` - Pressure \f$P_0\f$ at which the reference radius
- * \f$r_0\f$ is in equilibrium (optional, default 0)
+ * * `reference_pressure` - Pressure \f$P_0\f$ at which `radius0` and
+ * `thick0` are in equilibrium (optional, default 0, i.e. stress-free)
  *
  * An `activation_function` object is also required alongside
  * `zero_d_element_values` to select and parameterize the activation function
@@ -156,9 +160,11 @@
  *
  * Names of internal variables in this block's output:
  *
- * * `radius` - Chamber radius \f$r\f$
+ * * `radius` - Chamber radius displacement relative to `radius0` (the
+ * input, not the unloaded radius)
  * * `velo` - Chamber velocity \f$\dot{r}\f$
- * * `stress` - Spherical stress \f$S\f$
+ * * `stress` - Spherical stress \f$S\f$ (second Piola-Kirchhoff, relative to
+ * the unloaded configuration, as are `active_stress` and `passive_stress`)
  * * `active_stress` - Active stress \f$\tau\f$
  * * `volume` - Chamber volume \f$V\f$
  * * `passive_stress` - Passive (elastic + viscous) stress
