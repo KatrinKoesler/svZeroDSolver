@@ -92,8 +92,8 @@
       "name": "ventricle",
       "values": {
         "rho": 1e3,
-        "thick0": 0.0142,
-        "radius0": 0.0236,
+        "thick0": 0.0076,
+        "radius0": 0.0323,
         "eta": 70.0,
         "reference_pressure": 1066.58
       },
