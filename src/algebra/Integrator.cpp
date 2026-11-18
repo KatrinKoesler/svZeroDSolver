@@ -64,6 +64,7 @@ State Integrator::step(const State& old_state, double time) {
 
   // Count total number of step calls
   n_iter++;
+  last_nonlin_iter = 0;
 
   // Non-linear Newton-Raphson iterations
   for (size_t i = 0; i < max_iter; i++) {
@@ -112,6 +113,7 @@ State Integrator::step(const State& old_state, double time) {
 
     // Count total number of nonlinear iterations
     n_nonlin_iter++;
+    last_nonlin_iter++;
   }
   model->accept_timestep(new_state.y);
   return new_state;

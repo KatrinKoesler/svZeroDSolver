@@ -140,6 +140,12 @@ void Solver::run_integration() {
     interval_counter += 1;
     time = simparams.sim_time_step_size * double(i);
 
+    // Log Newton iterations of every time step within the last cycle
+    if (i > start_last_cycle) {
+      std::cout << "NEWTON_ITER t=" << time
+                << " n=" << integrator.get_last_nonlin_iter() << "\n";
+    }
+
     if ((interval_counter == simparams.output_interval) ||
         (!simparams.output_all_cycles && (i == start_last_cycle))) {
       if (simparams.output_all_cycles || (i >= start_last_cycle)) {

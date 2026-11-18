@@ -38,6 +38,7 @@ class Integrator {
   int size{0};
   int n_iter{0};
   int n_nonlin_iter{0};
+  int last_nonlin_iter{0};
   Eigen::Matrix<double, Eigen::Dynamic, 1> y_af;
   Eigen::Matrix<double, Eigen::Dynamic, 1> ydot_am;
   SparseSystem system;
@@ -100,6 +101,13 @@ class Integrator {
    *
    */
   double avg_nonlin_iter();
+
+  /**
+   * @brief Get number of nonlinear iterations in the most recent step call
+   *
+   * @return Number of nonlinear iterations in the most recent step call
+   */
+  int get_last_nonlin_iter() const { return last_nonlin_iter; }
 };
 
 #endif  // SVZERODSOLVER_ALGEBRA_INTEGRATOR_HPP_
