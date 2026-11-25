@@ -167,13 +167,18 @@
  * the unloaded configuration, as are `active_stress` and `passive_stress`)
  * * `active_stress` - Active stress \f$\tau\f$
  * * `volume` - Chamber volume \f$V\f$
+ *
+ * Active stress models may introduce additional internal variables (e.g.
+ * `e_c`, `tau_c`, `k_c`, `omega` for the `strain_dependent` model, see
+ * \ref ActiveStress).
+ *
+ * ### Post-processing variables
+ *
  * * `passive_stress` - Passive (elastic + viscous) stress
  * \f$S_\text{pas} = S - \tau\f$
  *
- * Active stress models may introduce additional internal variables (e.g.
- * `e_c`, `tau_c`, `k_c`, `omega`, `sigma_c`, `sigma_s`, `e_s` for the
- * `strain_dependent` model, see
- * \ref ActiveStress).
+ * The `strain_dependent` active stress model adds `sigma_c`, `sigma_s`
+ * and `e_s`. None of these appears in a governing equation.
  *
  */
 class ChamberSphere : public Block {
@@ -249,6 +254,16 @@ class ChamberSphere : public Block {
       SparseSystem& system, std::vector<double>& parameters,
       const Eigen::Matrix<double, Eigen::Dynamic, 1>& y,
       const Eigen::Matrix<double, Eigen::Dynamic, 1>& dy) override;
+
+  /**
+   * @brief Compute the post-processing variables from the converged state
+   *
+   * @param y Accepted state vector
+   * @param ydot Accepted derivative of the state vector
+   */
+  void update_outputs(
+      Eigen::Matrix<double, Eigen::Dynamic, 1>& y,
+      const Eigen::Matrix<double, Eigen::Dynamic, 1>& ydot) override;
 
   void set_activation_function(std::unique_ptr<ActivationFunction> af) override;
 
